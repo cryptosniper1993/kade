@@ -54,6 +54,15 @@ export function InvoicesView({ desk, refresh, notice }: { desk: Desk; refresh: (
     pickClient(stored);
   }, []);
 
+  useEffect(() => {
+    // Geopend vanuit Offertes na "Werk gedaan → omzetten naar factuur".
+    const wanted = sessionStorage.getItem("kade-invoice");
+    if (!wanted) return;
+    sessionStorage.removeItem("kade-invoice");
+    const invoice = desk.invoices.find((item) => item.id === wanted);
+    if (invoice && invoice.status === "draft") load(invoice);
+  }, []);
+
   function patch(index: number, partial: Partial<InvoiceLine>) {
     setLines((prev) => prev.map((line, i) => (i === index ? { ...line, ...partial } : line)));
   }

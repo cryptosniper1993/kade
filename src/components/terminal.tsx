@@ -8,6 +8,7 @@ import {
   Building2,
   ChartColumn,
   Compass,
+  FileSignature,
   FileText,
   FolderKanban,
   ListTodo,
@@ -45,6 +46,7 @@ import { LootsView } from "@/components/views/loots";
 import { MailView } from "@/components/views/mail";
 import { PartiesView } from "@/components/views/parties";
 import { ProjectsView } from "@/components/views/projects";
+import { QuotesView } from "@/components/views/quotes";
 import { ResearchView } from "@/components/views/research";
 import { SettingsView } from "@/components/views/settings";
 import { TasksView } from "@/components/views/tasks";
@@ -65,6 +67,7 @@ const GROUPS: { id: string; label: string; items: { id: string; label: string; i
     items: [
       { id: "klanten", label: "Klanten", icon: Users },
       { id: "leveranciers", label: "Leveranciers", icon: Truck },
+      { id: "offertes", label: "Offertes", icon: FileSignature },
       { id: "facturen", label: "Facturen", icon: FileText },
       { id: "boeken", label: "Boeken", icon: BookOpen },
       { id: "balans", label: "Balans", icon: Scale },
@@ -262,6 +265,7 @@ export function Terminal({ user }: { user: AppUser }) {
             {desk && view === "bots" && <BotsView desk={desk} refresh={refresh} notice={ping} />}
             {desk && view === "logboek" && <LogboekView desk={desk} />}
             {desk && view === "schaar" && <FiscalView desk={desk} refresh={refresh} notice={ping} />}
+            {desk && view === "offertes" && <QuotesView desk={desk} refresh={refresh} notice={ping} go={go} />}
             {desk && view === "facturen" && <InvoicesView desk={desk} refresh={refresh} notice={ping} />}
             {desk && view === "klanten" && <PartiesView kind="client" desk={desk} go={go} refresh={refresh} notice={ping} />}
             {desk && view === "leveranciers" && <PartiesView kind="supplier" desk={desk} go={go} refresh={refresh} notice={ping} />}
