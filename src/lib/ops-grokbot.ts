@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
+import { requirePermission } from "@/lib/auth/permissions";
 import { db, str, uid } from "@/lib/ops-shared";
 import { authHeader, buildGrokPayload, maskKey, validWebhookUrl, type GrokHeaderMode } from "@/lib/grokbot";
 
@@ -77,6 +78,7 @@ export const saveGrokBot = createServerFn({ method: "POST" })
     return { webhookUrl, senderKey: str(row.senderKey, 2000).trim(), headerMode, headerName };
   })
   .handler(async ({ context, data }) => {
+    requirePermission(context, "beheer");
     const sql = await db();
     // Lege sleutel = bestaande sleutel behouden.
     await sql`
@@ -92,6 +94,7 @@ export const saveGrokBot = createServerFn({ method: "POST" })
 export const clearGrokKey = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {
+    requirePermission(context, "beheer");
     const sql = await db();
     await sql`update grokbot_settings set sender_key = '', last_status = null where user_id = ${context.userId}`;
     return { ok: true as const };
@@ -114,6 +117,7 @@ export const sendToGrokBot = createServerFn({ method: "POST" })
     };
   })
   .handler(async ({ context, data }): Promise<{ ok: boolean; status: number | null; detail: string }> => {
+    requirePermission(context, "bots");
     const sql = await db();
     const row = await readRow(sql, context.userId);
     const url = str(row?.webhook_url, 2000);

@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
+import { requirePermission } from "@/lib/auth/permissions";
 import { brusselsToday } from "@/lib/day";
 import { personName, priorityQueue, projectName, projectProgress } from "@/lib/briefing";
 import { daysUntil, fleetSnapshot } from "@/lib/assets";
@@ -141,6 +142,7 @@ export const savePerson = createServerFn({ method: "POST" })
     return { name, role: str(row.role, 80) };
   })
   .handler(async ({ context, data }) => {
+    requirePermission(context, "werk");
     const sql = await db();
     const id = uid();
     await sql`
@@ -158,6 +160,7 @@ export const setPersonActive = createServerFn({ method: "POST" })
     return { id, active: Boolean(row.active) };
   })
   .handler(async ({ context, data }) => {
+    requirePermission(context, "werk");
     const sql = await db();
     await sql`update people set active = ${data.active} where id = ${data.id} and user_id = ${context.userId}`;
     return { ok: true as const };
@@ -179,6 +182,7 @@ export const saveProject = createServerFn({ method: "POST" })
     };
   })
   .handler(async ({ context, data }) => {
+    requirePermission(context, "werk");
     const sql = await db();
     const userId = context.userId;
     if (data.id) {
@@ -206,6 +210,7 @@ export const setProjectStatus = createServerFn({ method: "POST" })
     return { id, status: asProjectStatus(row.status) };
   })
   .handler(async ({ context, data }) => {
+    requirePermission(context, "werk");
     const sql = await db();
     await sql`update projects set status = ${data.status} where id = ${data.id} and user_id = ${context.userId}`;
     return { ok: true as const };
@@ -243,6 +248,7 @@ export const saveTask = createServerFn({ method: "POST" })
     };
   })
   .handler(async ({ context, data }) => {
+    requirePermission(context, "werk");
     const sql = await db();
     const userId = context.userId;
     if (data.projectId && !(await owns(sql, "projects", data.projectId, userId))) throw new Error("Project niet gevonden.");
@@ -278,6 +284,7 @@ export const setTaskStatus = createServerFn({ method: "POST" })
     return { id, status: asTaskStatus(row.status) };
   })
   .handler(async ({ context, data }) => {
+    requirePermission(context, "werk");
     const sql = await db();
     const doneAt = data.status === "klaar" ? new Date().toISOString() : null;
     await sql`
@@ -294,6 +301,7 @@ export const deleteTask = createServerFn({ method: "POST" })
     return { id };
   })
   .handler(async ({ context, data }) => {
+    requirePermission(context, "werk");
     const sql = await db();
     await sql`delete from tasks where id = ${data.id} and user_id = ${context.userId}`;
     return { ok: true as const };
@@ -336,6 +344,7 @@ export const writeMorningBrief = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((input: unknown) => ({ force: Boolean((input as { force?: boolean })?.force) }))
   .handler(async ({ context, data }) => {
+    requirePermission(context, "werk");
     const sql = await db();
     const userId = context.userId;
     const day = brusselsToday();

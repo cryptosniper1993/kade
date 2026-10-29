@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
+import { requirePermission } from "@/lib/auth/permissions";
 import {
   DEFAULT_BOTS,
   LOOTS,
@@ -48,6 +49,7 @@ export const saveBot = createServerFn({ method: "POST" })
     };
   })
   .handler(async ({ context, data }) => {
+    requirePermission(context, "bots");
     const sql = await db();
     if (data.id) {
       await sql`
@@ -67,6 +69,7 @@ export const deleteBot = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((input: unknown) => str((input as { id?: string })?.id, 80))
   .handler(async ({ context, data: id }) => {
+    requirePermission(context, "bots");
     const sql = await db();
     await sql`delete from bots where id = ${id} and user_id = ${context.userId}`;
     return { ok: true as const };
@@ -82,6 +85,7 @@ export const runBot = createServerFn({ method: "POST" })
     return { id, task };
   })
   .handler(async ({ context, data }) => {
+    requirePermission(context, "bots");
     const sql = await db();
     const rows = await sql<Record<string, unknown>>`
       select name, role, brief from bots where id = ${data.id} and user_id = ${context.userId}`;
@@ -110,6 +114,7 @@ export const askLoots = createServerFn({ method: "POST" })
     return { text };
   })
   .handler(async ({ context, data }) => {
+    requirePermission(context, "bots");
     const sql = await db();
     const userId = context.userId;
     await sql`
@@ -138,6 +143,7 @@ export const saveBrand = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((input: unknown) => brandOf((input as { brand?: string })?.brand))
   .handler(async ({ context, data }) => {
+    requirePermission(context, "beheer");
     const sql = await db();
     await sql`
       insert into desk_settings (user_id, brand) values (${context.userId}, ${data})
@@ -165,6 +171,7 @@ export const saveVoice = createServerFn({ method: "POST" })
     };
   })
   .handler(async ({ context, data }) => {
+    requirePermission(context, "beheer");
     const sql = await db();
     await sql`
       insert into desk_settings (
@@ -193,6 +200,7 @@ export const askHoofd = createServerFn({ method: "POST" })
     return { text };
   })
   .handler(async ({ context, data }) => {
+    requirePermission(context, "bots");
     const sql = await db();
     const userId = context.userId;
     const settings = await sql<Record<string, unknown>>`select agent_name from desk_settings where user_id = ${userId}`;
@@ -229,6 +237,7 @@ export const askSchaar = createServerFn({ method: "POST" })
     return { text };
   })
   .handler(async ({ context, data }) => {
+    requirePermission(context, "bots");
     const sql = await db();
     const userId = context.userId;
     await sql`
@@ -254,6 +263,7 @@ export const askResearch = createServerFn({ method: "POST" })
     return { question };
   })
   .handler(async ({ context, data }) => {
+    requirePermission(context, "bots");
     const sql = await db();
     const pack = await contextPack(sql, context.userId);
     const answer = await grok(
@@ -301,7 +311,8 @@ export const searchMail = createServerFn({ method: "POST" })
     const query = str(row.query, 240) || "newer_than:21d";
     return { provider, query };
   })
-  .handler(async ({ data }) => {
+  .handler(async ({ context, data }) => {
+    requirePermission(context, "bots");
     const { callTool } = await import("@/lib/app-data/client.server");
     const { ConnectorType } = await import("@/lib/app-data/types");
     const connectorType = data.provider === "gmail" ? ConnectorType.Gmail : ConnectorType.Outlook;

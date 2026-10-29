@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
+import { requirePermission } from "@/lib/auth/permissions";
 import {
   DEFAULT_BOTS,
   LOOTS,
@@ -72,6 +73,7 @@ export const postEntry = createServerFn({ method: "POST" })
     throw new Error("Onbekend boekstuk.");
   })
   .handler(async ({ context, data }) => {
+    requirePermission(context, "boeken");
     const sql = await db();
     const userId = context.userId;
     if (data.kind === "expense" || data.kind === "asset") {
@@ -119,6 +121,7 @@ export const deleteJournal = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((input: unknown) => str((input as { id?: string })?.id, 80))
   .handler(async ({ context, data: id }) => {
+    requirePermission(context, "boeken");
     const sql = await db();
     const rows = await sql<{ source: string }>`select source from journals where id = ${id} and user_id = ${context.userId}`;
     if (!rows[0]) return { ok: false as const, error: "Boeking niet gevonden." };

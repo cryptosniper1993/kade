@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
+import { requirePermission } from "@/lib/auth/permissions";
 import { asLines, db, mapCompany, str } from "@/lib/ops-shared";
 import { asTreatment } from "@/lib/invoicing";
 import {
@@ -29,6 +30,7 @@ export const prepareVatReturn = createServerFn({ method: "POST" })
     return { year, quarter, month };
   })
   .handler(async ({ context, data }) => {
+    requirePermission(context, "btw");
     const sql = await db();
     const userId = context.userId;
     const company = mapCompany((await sql<Record<string, unknown>>`select * from companies where user_id = ${userId}`)[0]);

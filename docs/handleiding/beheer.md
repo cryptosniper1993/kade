@@ -2,6 +2,8 @@
 
 Schermen: **Zaak** en **Instellingen**.
 
+Wie wat mag (Eigenaar, Boekhouder, Medewerker, Alleen lezen) en hoe je leden uitnodigt: zie [Rollen en rechten](rollen.md).
+
 ## Zaak
 
 **Doel:** de zaakfiche. Deze gegevens komen op facturen, bepalen je Peppol-ID, de btw-berekening en de fiscale regels.
@@ -29,7 +31,7 @@ Schermen: **Zaak** en **Instellingen**.
 
 ## Instellingen
 
-Vier panelen.
+Vijf panelen. **Leden en rollen** staat beschreven in [Rollen en rechten](rollen.md).
 
 ### Naam van de interface
 

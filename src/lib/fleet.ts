@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
+import { requirePermission } from "@/lib/auth/permissions";
 import { accountName } from "@/lib/accounts";
 import { assetAccount, depreciation } from "@/lib/assets";
 import { brusselsToday } from "@/lib/day";
@@ -171,6 +172,7 @@ export const saveAsset = createServerFn({ method: "POST" })
     };
   })
   .handler(async ({ context, data }) => {
+    requirePermission(context, "werk");
     const sql = await db();
     const userId = context.userId;
     if (data.holderId && !(await owns(sql, "people", data.holderId, userId))) throw new Error("Die persoon staat niet op de kade.");
@@ -209,6 +211,7 @@ export const deleteAsset = createServerFn({ method: "POST" })
     return { id };
   })
   .handler(async ({ context, data }) => {
+    requirePermission(context, "werk");
     const sql = await db();
     const open = await sql<{ n: number }>`
       select count(*)::int as n from incidents
@@ -251,6 +254,7 @@ export const bookAssetPurchase = createServerFn({ method: "POST" })
     return { id };
   })
   .handler(async ({ context, data }) => {
+    requirePermission(context, "boeken");
     const sql = await db();
     const userId = context.userId;
     const rows = await sql<Record<string, unknown>>`
@@ -282,6 +286,7 @@ export const bookAssetPurchase = createServerFn({ method: "POST" })
 export const bookDepreciation = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {
+    requirePermission(context, "boeken");
     const sql = await db();
     const userId = context.userId;
     const today = brusselsToday();
@@ -378,6 +383,7 @@ export const saveIncident = createServerFn({ method: "POST" })
     };
   })
   .handler(async ({ context, data }) => {
+    requirePermission(context, "werk");
     const sql = await db();
     const userId = context.userId;
     if (data.assetId && !(await owns(sql, "assets", data.assetId, userId))) throw new Error("Stuk niet gevonden.");
@@ -405,6 +411,7 @@ export const setIncidentStatus = createServerFn({ method: "POST" })
     return { id, status: asIncidentStatus(row.status) };
   })
   .handler(async ({ context, data }) => {
+    requirePermission(context, "werk");
     const sql = await db();
     const userId = context.userId;
     const rows = await sql<Record<string, unknown>>`

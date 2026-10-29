@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
+import { requirePermission } from "@/lib/auth/permissions";
 import {
   DEFAULT_BOTS,
   LOOTS,
@@ -59,6 +60,7 @@ export const saveDocument = createServerFn({ method: "POST" })
     };
   })
   .handler(async ({ context, data }) => {
+    requirePermission(context, "werk");
     const sql = await db();
     const id = uid();
     let clientId: string | null = null;
@@ -97,6 +99,7 @@ export const deleteDocument = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((input: unknown) => str((input as { id?: string })?.id, 80))
   .handler(async ({ context, data: id }) => {
+    requirePermission(context, "werk");
     const sql = await db();
     await sql`delete from documents where id = ${id} and user_id = ${context.userId}`;
     return { ok: true as const };
@@ -105,6 +108,7 @@ export const deleteDocument = createServerFn({ method: "POST" })
 export const seedDemo = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {
+    requirePermission(context, "beheer");
     const sql = await db();
     const userId = context.userId;
     const existing = await sql<{ n: number }>`select count(*)::int as n from journals where user_id = ${userId} and demo = true`;
@@ -230,6 +234,7 @@ export const seedDemo = createServerFn({ method: "POST" })
 export const clearDemo = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {
+    requirePermission(context, "beheer");
     const sql = await db();
     const userId = context.userId;
     const demoJournals = await sql<{ id: string }>`select id from journals where user_id = ${userId} and demo = true`;
