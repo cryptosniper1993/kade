@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { invoiceTotals, ogmFromSequence } from "@/lib/finance";
 import { euroLabel } from "@/lib/money";
-import { deleteDraftInvoice, saveClient, saveInvoice, setInvoicePaid } from "@/lib/ops";
+import { deleteDraftInvoice, getInvoiceUbl, saveClient, saveInvoice, sendInvoicePeppol, setInvoicePaid } from "@/lib/ops";
+import { peppolIdFromKbo } from "@/lib/peppol";
 import type { Client, Desk, Invoice, InvoiceLine } from "@/lib/types";
 import { Button, Field, Kicker, Panel, Select, TextInput } from "@/components/ui";
 
@@ -69,7 +70,7 @@ export function InvoicesView({ desk, refresh, notice }: { desk: Desk; refresh: (
     setLines(invoice.lines.length ? invoice.lines : [blank()]);
   }
 
-  async function persist(book: boolean) {
+  async function persist(book: boolean): Promise<string> {
     setBusy(true);
     try {
       let id = clientId;
@@ -77,7 +78,7 @@ export function InvoicesView({ desk, refresh, notice }: { desk: Desk; refresh: (
         const saved = await saveClient({ data: { id: "", name: clientName, vatNumber: clientVat, email: "", address: clientAddress, city: "" } });
         id = saved.id;
       }
-      await saveInvoice({
+      const saved = await saveInvoice({
         data: {
           id: editing,
           clientId: id,
@@ -95,11 +96,54 @@ export function InvoicesView({ desk, refresh, notice }: { desk: Desk; refresh: (
       setLines([blank()]);
       await refresh();
       notice(book ? "Factuur geboekt als vordering." : "Concept bewaard.");
+      return saved.id;
     } catch (error) {
       notice(error instanceof Error ? error.message : "Factuur mislukt.");
+      return "";
     } finally {
       setBusy(false);
     }
+  }
+
+  const client = desk.clients.find((item) => item.id === clientId);
+  const receiver = client?.peppolId || peppolIdFromKbo(clientVat);
+
+  async function downloadUbl(id: string) {
+    try {
+      const { filename, xml, problems } = await getInvoiceUbl({ data: { id } });
+      const url = URL.createObjectURL(new Blob([xml], { type: "application/xml" }));
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+      if (problems.length) notice(`UBL gedownload, maar nog niet Peppol-klaar: ${problems.join(" ")}`);
+    } catch (error) {
+      notice(error instanceof Error ? error.message : "UBL maken mislukt.");
+    }
+  }
+
+  async function sendPeppol(id: string): Promise<void> {
+    setBusy(true);
+    try {
+      const res = await sendInvoicePeppol({ data: { id } });
+      await refresh();
+      if (res.ok) return notice(res.message);
+      notice(`${res.message} Download de UBL (knop "UBL") en bezorg ze op een andere afgesproken manier.`);
+    } catch (error) {
+      notice(error instanceof Error ? error.message : "Peppol-verzending mislukt.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function approveAndSend() {
+    const to = receiver ? `via Peppol naar ${receiver}` : "zonder Peppol-ID (enkel boeken, daarna UBL downloaden)";
+    if (!window.confirm(`Factuur definitief boeken en ${to} versturen? Een geboekte factuur kan je niet meer wijzigen.`)) return;
+    const id = await persist(true);
+    if (!id) return;
+    if (!receiver) return notice("Factuur geboekt. De klant heeft geen Peppol-ID: download de UBL en bezorg ze op een afgesproken manier.");
+    await sendPeppol(id);
   }
 
   async function pay(id: string) {
@@ -171,7 +215,8 @@ export function InvoicesView({ desk, refresh, notice }: { desk: Desk; refresh: (
           <div className="flex flex-wrap gap-2">
             <Button variant="ghost" onClick={() => setLines((prev) => [...prev, blank()])}>Lijn</Button>
             <Button variant="ghost" disabled={busy} onClick={() => persist(false)}>Concept</Button>
-            <Button disabled={busy} onClick={() => persist(true)}>Boeken en versturen</Button>
+            <Button variant="ghost" disabled={busy} onClick={() => persist(true)}>Enkel boeken</Button>
+            <Button disabled={busy} onClick={approveAndSend}>Factuur OK en stuur uit</Button>
           </div>
           <Field label="Nota">
             <TextInput value={notes} onChange={(e) => setNotes(e.target.value)} />
@@ -192,6 +237,7 @@ export function InvoicesView({ desk, refresh, notice }: { desk: Desk; refresh: (
               <p className="mt-1 font-medium">{clientName || "Klant"}</p>
               <p>{clientAddress}</p>
               <p>{clientVat}</p>
+              {receiver && <p className="text-xs opacity-60">Peppol {receiver}</p>}
             </div>
             <div className="sm:text-right">
               <p>Datum {issueDate.split("-").reverse().join("/")}</p>
@@ -232,12 +278,21 @@ export function InvoicesView({ desk, refresh, notice }: { desk: Desk; refresh: (
               <span className="font-medium">{invoice.number}</span>
               <span className="ml-2 text-mist">{invoice.clientName}</span>
               <span className="ml-2 text-mist">{invoice.status === "paid" ? "betaald" : invoice.status === "sent" ? "open" : "concept"}</span>
+              {invoice.status !== "draft" && (
+                <span className={`ml-2 ${invoice.peppolStatus === "fout" ? "text-red-400" : "text-mist"}`} title={invoice.peppolMessage}>
+                  {invoice.peppolStatus === "verzonden" ? "· verzonden via Peppol" : invoice.peppolStatus === "fout" ? "· Peppol-fout" : "· niet via Peppol"}
+                </span>
+              )}
             </span>
             <span className="flex flex-wrap items-center gap-2">
               <span className="tabular-nums text-mist">{euroLabel(invoiceTotals(invoice.lines, exempt).incl)}</span>
               {invoice.status === "draft" && <Button variant="ghost" onClick={() => load(invoice)}>Open</Button>}
               {invoice.status === "draft" && <Button variant="ghost" onClick={() => remove(invoice.id)}>Weg</Button>}
               {invoice.status === "sent" && <Button variant="ghost" onClick={() => pay(invoice.id)}>Betaald</Button>}
+              {invoice.status !== "draft" && <Button variant="ghost" onClick={() => downloadUbl(invoice.id)}>UBL</Button>}
+              {invoice.status !== "draft" && invoice.peppolStatus !== "verzonden" && (
+                <Button variant="ghost" disabled={busy} onClick={() => sendPeppol(invoice.id)}>Verstuur via Peppol</Button>
+              )}
             </span>
           </li>
         ))}

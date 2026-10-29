@@ -1,0 +1,6926 @@
+import { o as __toESM } from "../_runtime.mjs";
+import { G as require_react, b as require_jsx_runtime, v as Navigate } from "../_libs/@tanstack/react-router+[...].mjs";
+import { a as signOut } from "./client-B6x-1vPk.mjs";
+import { r as createServerFn } from "./ssr.mjs";
+import { r as CONNECTOR_TOKEN_READY_EVENT } from "./types-SN-XU-b5.mjs";
+import { a as hasGateSessionMarker } from "./server-DaDAEmBs.mjs";
+import { a as daysUntil, c as euroLabel, d as leaseCostAccount, i as brusselsToday, l as fleetSnapshot, n as assetAccount, o as defaultLife, r as authMiddleware, s as depreciation, t as ASSET_CATEGORIES, u as formatDay } from "./day-BxYy7QRe.mjs";
+import { i as isKnownAccount, r as accountName, t as EXPENSE_ACCOUNTS } from "./accounts-CPuR-Fbz.mjs";
+import { a as isLate, c as projectName, d as saveAsset, f as saveIncident, i as deleteAsset, l as projectProgress, n as bookDepreciation, o as personName, p as setIncidentStatus, r as createSsrRpc, s as priorityQueue, t as bookAssetPurchase } from "./briefing-BKh7ysVD.mjs";
+import { A as setProjectStatus, C as ogmFromSequence, D as saveProject, E as savePerson, M as str, O as saveTask, P as writeMorningBrief, S as num, a as asLines, d as deleteTask, g as isCompanyForm, h as invoiceTotals, i as VOICE_LANGS, j as setTaskStatus, k as setPersonActive, l as dateStr, o as buildSnapshot, s as clamp } from "./ops-shared-D7VxsQv_.mjs";
+import { a as validWebhookUrl, i as parseGrokCommand, t as authHeader } from "./grokbot-DKOQZr6S.mjs";
+import { i as peppolIdFromKbo } from "./peppol-DqsOIc03.mjs";
+import { _ as Boxes, a as Settings, b as AudioLines, c as Scissors, d as ListTodo, f as FolderKanban, g as Building2, h as ChartColumn, i as Ship, l as Scale, m as Compass, n as Truck, o as Search, p as FileText, s as ScrollText, t as Users, u as Mail, v as Bot, x as Archive, y as BookOpen } from "../_libs/lucide-react.mjs";
+import { a as Field, c as Select, d as cn, f as deleteDocument, g as useCurrentUserState, h as seedDemo, i as DeckLink, l as TextInput, m as saveDocument, n as BootScreen, o as Kicker, p as getDocument, r as Button, s as Panel, t as Area, u as clearDemo } from "./ui-BZXg77Zv.mjs";
+import { a as ResponsiveContainer, i as Bar, n as YAxis, o as Tooltip, r as XAxis, t as BarChart } from "../_libs/recharts+[...].mjs";
+// node_modules/.nitro/vite/services/ssr/assets/routes-qo_qV3Nl.js
+var import_react = /* @__PURE__ */ __toESM(require_react());
+var import_jsx_runtime = require_jsx_runtime();
+function isLoginRequired(result) {
+	return result.ok === false && result.loginRequired === true;
+}
+function isConnectorPending(result) {
+	return result.ok === false && result.pending === true;
+}
+function isFramed() {
+	try {
+		return window.self !== window.top;
+	} catch {
+		return true;
+	}
+}
+function redirectToLoginIfRequired(result) {
+	if (!isLoginRequired(result)) return false;
+	const url = result.loginUrl;
+	if (!url) return false;
+	if (typeof window === "undefined") return false;
+	if (isFramed()) {
+		const opened = window.open(url, "_blank");
+		if (opened) {
+			opened.opener = null;
+			return true;
+		}
+	}
+	window.location.assign(url);
+	return true;
+}
+/**
+* Auth state components — plain wrappers around `useCurrentUserState()`.
+*
+* With auth on, visitors are signed out until they authenticate — in the sandbox
+* live preview too, which does real sign-in. The shared dev user appears only
+* when auth is disabled (`VITE_AUTH_ENABLED=false`, the shipped default).
+* While the session is still resolving, gates that care about signed-out state
+* render nothing so there's no signed-out flash on hard reload.
+*/
+/** Where `RedirectToSignIn` sends signed-out visitors. Create this route. */
+var SIGN_IN_PATH = "/login";
+/**
+* Client-side redirect to the sign-in route (TanStack `<Navigate>` — NOT a full
+* `window.location` reload). A hard navigation re-bootstraps the SPA and re-runs
+* session loading, which feels like a second "Loading…" on /login.
+*
+* Guard routes by waiting out `isPending` first (see `use-current-user`), then
+* render this.
+*/
+function RedirectToSignIn({ to = SIGN_IN_PATH }) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Navigate, { to });
+}
+var loadDesk = createServerFn({ method: "GET" }).middleware([authMiddleware]).handler(createSsrRpc("06878bf422ceaeacd3b1c793b077097c25480787e9194a94916c0fb880ec2175"));
+function parseCompany(input) {
+	const row = input ?? {};
+	const name = str(row.name, 160);
+	if (!name) throw new Error("De zaak heeft een naam nodig.");
+	const form = str(row.legalForm, 20);
+	const regime = str(row.vatRegime, 20);
+	return {
+		name,
+		legalForm: [
+			"bv",
+			"eenmanszaak",
+			"vof",
+			"commv"
+		].includes(form) ? form : "bv",
+		vatNumber: str(row.vatNumber, 32),
+		enterpriseNumber: str(row.enterpriseNumber, 32),
+		address: str(row.address, 180),
+		city: str(row.city, 80),
+		email: str(row.email, 160),
+		iban: str(row.iban, 40),
+		vatRegime: [
+			"quarterly",
+			"monthly",
+			"exempt"
+		].includes(regime) ? regime : "quarterly",
+		activityStatus: str(row.activityStatus, 20) === "hoofdberoep" ? "hoofdberoep" : "bijberoep",
+		yearEndMonth: Math.min(12, Math.max(1, Number(row.yearEndMonth) || 12))
+	};
+}
+var saveCompany = createServerFn({ method: "POST" }).middleware([authMiddleware]).validator((input) => parseCompany(input)).handler(createSsrRpc("cf50a86873d4c7fdbc9fc5e79ead9226c0d0a5589a3c6bf5c263c10a2609109f"));
+var saveClient = createServerFn({ method: "POST" }).middleware([authMiddleware]).validator((input) => partyInput(input, "klant")).handler(createSsrRpc("a3b0efeb447e4e679a370231a4e8fcdbe1c05a55ffd736698bd3c9a7452beb14"));
+var saveSupplier = createServerFn({ method: "POST" }).middleware([authMiddleware]).validator((input) => {
+	const party = partyInput(input, "leverancier");
+	const account = str(input?.account, 8) || "6400";
+	if (!isKnownAccount(account) || !account.startsWith("6")) throw new Error("Kies een kostenrekening.");
+	return {
+		...party,
+		account
+	};
+}).handler(createSsrRpc("65eed614840a53b82c12e095631c48c310d0e983b46bb4e1878d6b6679a68ea7"));
+var setPartyActive = createServerFn({ method: "POST" }).middleware([authMiddleware]).validator((input) => {
+	const row = input ?? {};
+	const id = str(row.id, 80);
+	if (!id) throw new Error("Relatie ontbreekt.");
+	return {
+		id,
+		kind: row.kind === "supplier" ? "supplier" : "client",
+		active: Boolean(row.active)
+	};
+}).handler(createSsrRpc("f629c22a2cb133ccede5c7d43d3a5f274a1501a7c8a58ddc104f05e664a9110f"));
+var deleteParty = createServerFn({ method: "POST" }).middleware([authMiddleware]).validator((input) => {
+	const row = input ?? {};
+	const id = str(row.id, 80);
+	if (!id) throw new Error("Relatie ontbreekt.");
+	return {
+		id,
+		kind: row.kind === "supplier" ? "supplier" : "client"
+	};
+}).handler(createSsrRpc("95437ed89329ca533b8cec550b6693baa5cf5ae2bbecce54b5e8911e2d741408"));
+function partyInput(input, who) {
+	const row = input ?? {};
+	const name = str(row.name, 160);
+	if (!name) throw new Error(`De ${who} heeft een naam nodig.`);
+	const payDays = Math.round(Number(row.payDays));
+	return {
+		id: str(row.id, 80),
+		name,
+		vatNumber: str(row.vatNumber, 32).toUpperCase(),
+		email: str(row.email, 160),
+		phone: str(row.phone, 40),
+		contact: str(row.contact, 80),
+		address: str(row.address, 180),
+		postalCode: str(row.postalCode, 12),
+		city: str(row.city, 80),
+		country: str(row.country, 80) || "België",
+		payDays: Number.isFinite(payDays) ? Math.min(180, Math.max(0, payDays)) : 30,
+		iban: str(row.iban, 40).replace(/\s+/g, "").toUpperCase(),
+		note: str(row.note, 800),
+		active: row.active == null ? true : Boolean(row.active),
+		peppolId: str(row.peppolId, 60).replace(/\s+/g, "")
+	};
+}
+/**
+* Peppol via een erkende access point (Peppol-dienstverlener).
+* Kade praat met één generieke REST-adapter. API-sleutel en URL staan enkel
+* server-side (PEPPOL_API_URL, PEPPOL_API_KEY, optioneel PEPPOL_PROVIDER).
+* Zonder account bij een provider wordt er niets verzonden en ook geen succes gemeld.
+*/
+/**
+* Generiek contract (veel providers bieden iets gelijkaardigs; anders schrijf je hier een kleine adapter per provider):
+*   GET  {base}/health                          -> 2xx
+*   GET  {base}/participants/{peppolId}         -> 200 { registered: boolean } of 404
+*   POST {base}/documents (application/xml UBL) -> 2xx { id }
+* Authenticatie: Authorization: Bearer <PEPPOL_API_KEY>.
+*/
+var peppolConfig = createServerFn({ method: "GET" }).middleware([authMiddleware]).handler(createSsrRpc("68ce36a1f790070b51527088d1f566ff3dcc58c4c06fa68ed78cdd6b2e09c5c9"));
+var testPeppol = createServerFn({ method: "POST" }).middleware([authMiddleware]).handler(createSsrRpc("a60dba3f192971abad3baf66932750fe633d2e0f33bb46169a5816c72408a9b0"));
+var lookupPeppol = createServerFn({ method: "POST" }).middleware([authMiddleware]).validator((input) => str(input?.peppolId, 60)).handler(createSsrRpc("7848540f6cbef7c3b989cb5c4382daf590f241c07cbaefe293352f09da357d9c"));
+var idInput = (input) => {
+	const id = str(input?.id, 80);
+	if (!id) throw new Error("Factuur ontbreekt.");
+	return id;
+};
+var getInvoiceUbl = createServerFn({ method: "POST" }).middleware([authMiddleware]).validator(idInput).handler(createSsrRpc("d4ac242f6eeb54ebfdcbdea18c6d8bdfeb9f334dfb2a6349dc6aea8d209e2c21"));
+var sendInvoicePeppol = createServerFn({ method: "POST" }).middleware([authMiddleware]).validator(idInput).handler(createSsrRpc("70b34233cd39af25253975b11a8b639b170dcc69cc6ce05a29bed5bc7343d3e4"));
+var saveInvoice = createServerFn({ method: "POST" }).middleware([authMiddleware]).validator((input) => {
+	const row = input ?? {};
+	const lines = asLines(row.lines).filter((l) => l.description && l.qty > 0);
+	if (!lines.length) throw new Error("Minstens één lijn met omschrijving en aantal.");
+	const clientName = str(row.clientName, 160);
+	if (!clientName) throw new Error("Zet een klant op de factuur.");
+	return {
+		id: str(row.id, 80),
+		clientId: str(row.clientId, 80),
+		clientName,
+		clientVat: str(row.clientVat, 32),
+		clientAddress: str(row.clientAddress, 200),
+		issueDate: dateStr(row.issueDate),
+		dueDate: dateStr(row.dueDate),
+		notes: str(row.notes, 800),
+		lines,
+		book: Boolean(row.book)
+	};
+}).handler(createSsrRpc("ad767a7253b3f00ecb204d6049a51be2e7b3c90f88b0115b6bd4245b796b94b0"));
+var setInvoicePaid = createServerFn({ method: "POST" }).middleware([authMiddleware]).validator((input) => {
+	const id = str(input?.id, 80);
+	const paidOn = dateStr(input?.paidOn);
+	if (!id) throw new Error("Factuur ontbreekt.");
+	return {
+		id,
+		paidOn
+	};
+}).handler(createSsrRpc("ff9f12ae4dbcb86e92da6a4f581efd6bc094a129b75ecbed89adb5059d72eacd"));
+var deleteDraftInvoice = createServerFn({ method: "POST" }).middleware([authMiddleware]).validator((input) => str(input?.id, 80)).handler(createSsrRpc("3756ceb9593f29c18ab73dbd8188c4a0011596fe0147c1b4d49e9b0d592a2112"));
+var postEntry = createServerFn({ method: "POST" }).middleware([authMiddleware]).validator((input) => {
+	const row = input ?? {};
+	const kind = str(row.kind, 20);
+	const date = dateStr(row.date);
+	if (kind === "expense" || kind === "asset") {
+		const account = kind === "asset" ? "2400" : str(row.account, 8);
+		if (!isKnownAccount(account) || kind === "expense" && !account.startsWith("6")) throw new Error("Kies een kostenrekening.");
+		const amountEx = num(row.amountEx);
+		if (amountEx <= 0) throw new Error("Bedrag moet groter zijn dan nul.");
+		const vatRate = [
+			0,
+			6,
+			12,
+			21
+		].includes(Number(row.vatRate)) ? Number(row.vatRate) : 21;
+		const memo = str(row.memo, 180) || accountName(account);
+		if (kind === "expense") return {
+			kind: "expense",
+			date,
+			memo,
+			account,
+			amountEx,
+			vatRate,
+			paid: row.paid !== false,
+			supplierId: str(row.supplierId, 80)
+		};
+		return {
+			kind: "asset",
+			date,
+			memo,
+			account,
+			amountEx,
+			vatRate,
+			paid: true
+		};
+	}
+	if (kind === "prepay" || kind === "capital") {
+		const amount = num(row.amount);
+		if (amount <= 0) throw new Error("Bedrag moet groter zijn dan nul.");
+		return {
+			kind,
+			date,
+			amount
+		};
+	}
+	if (kind === "salary") {
+		const amount = num(row.amount);
+		if (amount <= 0) throw new Error("Bedrag moet groter zijn dan nul.");
+		return {
+			kind: "salary",
+			date,
+			memo: str(row.memo, 180) || "Bezoldiging",
+			amount
+		};
+	}
+	throw new Error("Onbekend boekstuk.");
+}).handler(createSsrRpc("169788d3137048773583b296f0b44bf1515ac99b61e4f2643cb1b06c047c6499"));
+var deleteJournal = createServerFn({ method: "POST" }).middleware([authMiddleware]).validator((input) => str(input?.id, 80)).handler(createSsrRpc("dddd0a77fb88e4ccdd595aba299076e535c964157ce9989de20fc6564f104024"));
+var saveBot = createServerFn({ method: "POST" }).middleware([authMiddleware]).validator((input) => {
+	const row = input ?? {};
+	const name = str(row.name, 80);
+	if (!name) throw new Error("De bot heeft een naam nodig.");
+	return {
+		id: str(row.id, 80),
+		name,
+		role: str(row.role, 60) || "Algemeen",
+		brief: str(row.brief, 600),
+		task: str(row.task, 2e3),
+		followed: Boolean(row.followed)
+	};
+}).handler(createSsrRpc("d63532c631b3e414d04eb215f13f63ce8e22f3e6bdf639a5805777e53d9437de"));
+var deleteBot = createServerFn({ method: "POST" }).middleware([authMiddleware]).validator((input) => str(input?.id, 80)).handler(createSsrRpc("1363afb34c753fb51c0292ca184ebe30a7b2ff94547bdc3bb503f043b100786e"));
+var runBot = createServerFn({ method: "POST" }).middleware([authMiddleware]).validator((input) => {
+	const row = input ?? {};
+	const id = str(row.id, 80);
+	const task = str(row.task, 2e3);
+	if (!id || !task) throw new Error("Kies een bot en geef hem een opdracht.");
+	return {
+		id,
+		task
+	};
+}).handler(createSsrRpc("f53926ce5c42dc3e7111bf061f2d4aa58ef41bd00800a7f243c955605b7f0ed4"));
+var askLoots = createServerFn({ method: "POST" }).middleware([authMiddleware]).validator((input) => {
+	const text = str(input?.text, 4e3);
+	if (!text) throw new Error("Zeg iets tegen Loots.");
+	return { text };
+}).handler(createSsrRpc("415e6d556885b69fa07e8bc097a3539f39b7aa9aeca0b16e4eb133a9cb2d082e"));
+function brandOf(input) {
+	const name = str(input, 24);
+	if (name.length < 2) throw new Error("De naam heeft minstens twee tekens nodig.");
+	if (!/^[\p{L}\p{N}][\p{L}\p{N} .'-]*$/u.test(name)) throw new Error("Alleen letters, cijfers, een spatie of een streepje.");
+	return name;
+}
+var saveBrand = createServerFn({ method: "POST" }).middleware([authMiddleware]).validator((input) => brandOf(input?.brand)).handler(createSsrRpc("75a0fe448f40f4d1748ce4b011acc4761e2f94ea039f9da9829a28b78f933cd3"));
+var saveVoice = createServerFn({ method: "POST" }).middleware([authMiddleware]).validator((input) => {
+	const row = input ?? {};
+	const agentName = str(row.agentName, 24);
+	if (agentName.length < 2) throw new Error("De stem heeft een naam nodig.");
+	if (!/^[\p{L}\p{N}][\p{L}\p{N} .'-]*$/u.test(agentName)) throw new Error("Alleen letters, cijfers, een spatie of een streepje.");
+	const lang = str(row.lang, 12);
+	return {
+		agentName,
+		voiceUri: str(row.voiceUri, 200),
+		lang: VOICE_LANGS.includes(lang) ? lang : "nl-BE",
+		rate: clamp(Number(row.rate), .7, 1.5, 1),
+		pitch: clamp(Number(row.pitch), .7, 1.4, 1),
+		volume: clamp(Number(row.volume), .2, 1, 1),
+		autoSpeak: Boolean(row.autoSpeak),
+		sendOnListen: row.sendOnListen == null ? true : Boolean(row.sendOnListen)
+	};
+}).handler(createSsrRpc("2a207f213f1dad0efe414976ca9d8dcdce9135c45b23daa7806095ffb6b0f14c"));
+var askHoofd = createServerFn({ method: "POST" }).middleware([authMiddleware]).validator((input) => {
+	const text = str(input?.text, 4e3);
+	if (!text) throw new Error("Zeg iets.");
+	return { text };
+}).handler(createSsrRpc("c3e8112b5981ee4c3e86fc10a2b985448295089cd937052b642f0a7ac6d2baeb"));
+var askSchaar = createServerFn({ method: "POST" }).middleware([authMiddleware]).validator((input) => {
+	const text = str(input?.text, 4e3);
+	if (!text) throw new Error("Zeg wat de druk moet verlagen.");
+	return { text };
+}).handler(createSsrRpc("b18a1b037560665c467cfc75a869a55eadfbf73ff8b5476cc804e72f662a6e02"));
+var askResearch = createServerFn({ method: "POST" }).middleware([authMiddleware]).validator((input) => {
+	const question = str(input?.question, 4e3);
+	if (question.length < 8) throw new Error("Formuleer de vraag iets scherper.");
+	return { question };
+}).handler(createSsrRpc("80cb00e56503e2218fce119ae82eb6da795062e4b85a48e0184ece63a03539e9"));
+var searchMail = createServerFn({ method: "POST" }).middleware([authMiddleware]).validator((input) => {
+	const row = input ?? {};
+	return {
+		provider: row.provider === "outlook" ? "outlook" : "gmail",
+		query: str(row.query, 240) || "newer_than:21d"
+	};
+}).handler(createSsrRpc("0dcf3c27e858a2fdc35337a2fcf2a7b0e2712991f42e23c7e6e5af9a4487e926"));
+function AnalysisView({ desk }) {
+	const snap = buildSnapshot(desk.journals, desk.company);
+	const exempt = desk.company?.vatRegime === "exempt";
+	const byClient = /* @__PURE__ */ new Map();
+	for (const invoice of desk.invoices) {
+		if (invoice.status === "draft") continue;
+		const total = invoiceTotals(invoice.lines, exempt).ex;
+		byClient.set(invoice.clientName, (byClient.get(invoice.clientName) ?? 0) + total);
+	}
+	const clients = [...byClient.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
+	const maxCost = Math.max(1, ...snap.expensesByAccount.map((r) => r.amount));
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: "flex flex-col gap-6",
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", { children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Kicker, { children: "Analyse" }),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
+					className: "mt-2 font-display text-5xl",
+					children: "Waar het geld loopt."
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+					className: "mt-2 max-w-xl text-mist",
+					children: [
+						"Omzet tegen kosten, per maand van boekjaar ",
+						snap.range.label,
+						". Conceptfacturen tellen niet mee."
+					]
+				})
+			] }),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Panel, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "mb-3 flex gap-4 text-sm text-mist",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+					className: "inline-flex items-center gap-2",
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "inline-block size-2 rounded-sm bg-brass" }), " Omzet"]
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+					className: "inline-flex items-center gap-2",
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "inline-block size-2 rounded-sm bg-mist" }), " Kosten"]
+				})]
+			}), snap.byMonth.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "text-sm text-mist",
+				children: "Nog geen beweging in dit boekjaar. Boek een factuur of een kost."
+			}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+				className: "h-64",
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ResponsiveContainer, {
+					width: "100%",
+					height: "100%",
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(BarChart, {
+						data: snap.byMonth,
+						children: [
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)(XAxis, {
+								dataKey: "label",
+								stroke: "var(--color-mist)",
+								fontSize: 12,
+								tickLine: false,
+								axisLine: false
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)(YAxis, {
+								width: 44,
+								stroke: "var(--color-mist)",
+								fontSize: 12,
+								tickLine: false,
+								axisLine: false,
+								tickFormatter: (value) => {
+									const n = Number(value);
+									if (!Number.isFinite(n)) return "";
+									if (Math.abs(n) >= 1e3) return `${Math.round(n / 1e3)}k`;
+									return String(Math.round(n));
+								}
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Tooltip, {
+								cursor: { fill: "var(--color-raised)" },
+								contentStyle: {
+									background: "var(--color-panel)",
+									border: "1px solid var(--color-line)",
+									color: "var(--color-ivory)"
+								},
+								formatter: (value) => euroLabel(Number(value ?? 0))
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Bar, {
+								dataKey: "income",
+								name: "Omzet",
+								fill: "var(--color-brass)",
+								radius: 2
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Bar, {
+								dataKey: "expense",
+								name: "Kosten",
+								fill: "var(--color-mist)",
+								radius: 2
+							})
+						]
+					})
+				})
+			})] }),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "grid gap-4 lg:grid-cols-2",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Panel, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Kicker, { children: "Kosten per rekening" }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("ul", {
+					className: "mt-4 flex flex-col gap-3",
+					children: [snap.expensesByAccount.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", {
+						className: "text-sm text-mist",
+						children: "Nog geen kosten."
+					}), snap.expensesByAccount.map((row) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+						className: "flex justify-between text-sm",
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: row.name }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+							className: "tabular-nums",
+							children: euroLabel(row.amount)
+						})]
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+						className: "mt-1 h-1.5 rounded-sm bg-ink",
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+							className: "h-1.5 rounded-sm bg-brass",
+							style: { width: `${row.amount / maxCost * 100}%` }
+						})
+					})] }, row.code))]
+				})] }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Panel, { children: [
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Kicker, { children: "Klanten, excl. btw" }),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("ul", {
+						className: "mt-4 flex flex-col gap-3",
+						children: [clients.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", {
+							className: "text-sm text-mist",
+							children: "Nog geen geboekte facturen."
+						}), clients.map(([name, amount]) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
+							className: "flex justify-between gap-3 text-sm",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: name }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+								className: "tabular-nums",
+								children: euroLabel(amount)
+							})]
+						}, name))]
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+						className: "mt-6 text-sm text-mist",
+						children: [
+							"Netto btw-positie ",
+							euroLabel(snap.vatNet),
+							". Voorafbetaald ",
+							euroLabel(snap.prepayments),
+							"."
+						]
+					})
+				] })]
+			})
+		]
+	});
+}
+function ArchiveView({ desk, refresh, notice }) {
+	const [vendor, setVendor] = (0, import_react.useState)("");
+	const [kind, setKind] = (0, import_react.useState)("bon");
+	const [docDate, setDocDate] = (0, import_react.useState)((/* @__PURE__ */ new Date()).toISOString().slice(0, 10));
+	const [amount, setAmount] = (0, import_react.useState)("");
+	const [note, setNote] = (0, import_react.useState)("");
+	const [file, setFile] = (0, import_react.useState)(null);
+	const [preview, setPreview] = (0, import_react.useState)(null);
+	const [bookId, setBookId] = (0, import_react.useState)(null);
+	const [account, setAccount] = (0, import_react.useState)("6110");
+	const [busy, setBusy] = (0, import_react.useState)(false);
+	const [supplierId, setSupplierId] = (0, import_react.useState)("");
+	const [clientId, setClientId] = (0, import_react.useState)("");
+	async function upload() {
+		if (!file) return notice("Kies eerst een bestand.");
+		if (file.size > 7e5) return notice("Houd het bestand onder 700 KB.");
+		setBusy(true);
+		try {
+			const dataUrl = await readFile$1(file);
+			await saveDocument({ data: {
+				filename: file.name,
+				mime: file.type,
+				dataUrl,
+				kind,
+				vendor,
+				docDate,
+				amountEur: amount ? Number(amount.replace(",", ".")) : null,
+				note,
+				clientId,
+				supplierId
+			} });
+			setFile(null);
+			setVendor("");
+			setNote("");
+			setAmount("");
+			setClientId("");
+			setSupplierId("");
+			await refresh();
+			notice("Document in het archief.");
+		} catch (error) {
+			notice(error instanceof Error ? error.message : "Opladen mislukt.");
+		} finally {
+			setBusy(false);
+		}
+	}
+	async function open(id, title) {
+		try {
+			const doc = await getDocument({ data: id });
+			setPreview({
+				title,
+				src: doc.data_url,
+				mime: doc.mime
+			});
+		} catch (error) {
+			notice(error instanceof Error ? error.message : "Openen mislukt.");
+		}
+	}
+	async function book(amountEur) {
+		if (!bookId || !amountEur) return;
+		try {
+			await postEntry({ data: {
+				kind: "expense",
+				date: docDate,
+				memo: vendor || "Bon",
+				account,
+				amountEx: amountEur,
+				vatRate: desk.company?.vatRegime === "exempt" ? 0 : 21,
+				paid: true,
+				supplierId: desk.documents.find((doc) => doc.id === bookId)?.supplierId ?? ""
+			} });
+			setBookId(null);
+			await refresh();
+			notice("Bon geboekt als kost. De btw is 21% tenzij je vrijgesteld bent. Pas het aan in het journaal als dat niet klopt.");
+		} catch (error) {
+			notice(error instanceof Error ? error.message : "Boeken mislukt.");
+		}
+	}
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: "flex flex-col gap-6",
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", { children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Kicker, { children: "Archief" }),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
+					className: "mt-2 font-display text-5xl",
+					children: "Bonnen en facturen."
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "mt-2 max-w-xl text-mist text-pretty",
+					children: "Bewaar het bewijs bij de boeking. De fiscus wil tien jaar kunnen terugkijken. Houd bestanden klein, dit archief zit in je eigen kluis."
+				})
+			] }),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Panel, {
+				className: "grid gap-3 md:grid-cols-2",
+				children: [
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+						label: "Leverancier",
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+							value: vendor,
+							onChange: (e) => setVendor(e.target.value)
+						})
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+						label: "Soort",
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Select, {
+							value: kind,
+							onChange: (e) => setKind(e.target.value),
+							children: [
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+									value: "bon",
+									children: "Bon"
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+									value: "aankoopfactuur",
+									children: "Aankoopfactuur"
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+									value: "contract",
+									children: "Contract"
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+									value: "ander",
+									children: "Ander"
+								})
+							]
+						})
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+						label: "Datum",
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+							type: "date",
+							value: docDate,
+							onChange: (e) => setDocDate(e.target.value)
+						})
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+						label: "Bedrag excl. btw",
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+							value: amount,
+							onChange: (e) => setAmount(e.target.value),
+							inputMode: "decimal"
+						})
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+						label: "Klant in het bestand",
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Select, {
+							value: clientId,
+							onChange: (e) => setClientId(e.target.value),
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+								value: "",
+								children: "Geen"
+							}), desk.clients.map((client) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+								value: client.id,
+								children: client.name
+							}, client.id))]
+						})
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+						label: "Leverancier in het bestand",
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Select, {
+							value: supplierId,
+							onChange: (e) => {
+								setSupplierId(e.target.value);
+								const found = desk.suppliers.find((item) => item.id === e.target.value);
+								if (found && !vendor) setVendor(found.name);
+							},
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+								value: "",
+								children: "Geen"
+							}), desk.suppliers.map((supplier) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+								value: supplier.id,
+								children: supplier.name
+							}, supplier.id))]
+						})
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+						label: "Nota",
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+							value: note,
+							onChange: (e) => setNote(e.target.value)
+						})
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+						label: "Bestand",
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+							type: "file",
+							accept: "image/png,image/jpeg,image/webp,image/gif,application/pdf",
+							className: "min-h-11 w-full text-sm",
+							onChange: (e) => setFile(e.target.files?.[0] ?? null)
+						})
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+						className: "md:col-span-2",
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+							disabled: busy,
+							onClick: upload,
+							children: "Opladen"
+						})
+					})
+				]
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("ul", {
+				className: "grid gap-3 sm:grid-cols-2",
+				children: [desk.documents.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", {
+					className: "text-sm text-mist",
+					children: "Nog niets opgeladen."
+				}), desk.documents.map((doc) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
+					className: "rounded-md border border-line bg-panel p-4",
+					children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: "text-xs tracking-widest text-brass uppercase",
+							children: doc.kind
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: "mt-2 font-medium",
+							children: doc.vendor || doc.filename
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+							className: "text-sm text-mist",
+							children: [
+								doc.docDate?.split("-").reverse().join("/") ?? "zonder datum",
+								" ",
+								doc.amountEur != null ? `· ${euroLabel(doc.amountEur)}` : ""
+							]
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: "mt-1 text-sm text-mist",
+							children: doc.note
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "mt-3 flex flex-wrap gap-2",
+							children: [
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+									variant: "ghost",
+									onClick: () => open(doc.id, doc.filename),
+									children: "Open"
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+									variant: "ghost",
+									onClick: () => setBookId(doc.id),
+									children: "Boek als kost"
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+									variant: "ghost",
+									onClick: async () => {
+										await deleteDocument({ data: doc.id });
+										await refresh();
+									},
+									children: "Wis"
+								})
+							]
+						}),
+						bookId === doc.id && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "mt-3 flex flex-col gap-2",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Select, {
+								value: account,
+								onChange: (e) => setAccount(e.target.value),
+								children: EXPENSE_ACCOUNTS.map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+									value: item.code,
+									children: item.name
+								}, item.code))
+							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+								onClick: () => book(doc.amountEur),
+								children: "Bevestig boeking"
+							})]
+						})
+					]
+				}, doc.id))]
+			}),
+			preview && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+				className: "fixed inset-0 z-30 grid place-items-center bg-ink/80 p-4",
+				onClick: () => setPreview(null),
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "max-h-full w-full max-w-3xl overflow-auto rounded-md bg-panel p-4",
+					onClick: (e) => e.stopPropagation(),
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+						className: "mb-3 flex items-center justify-between",
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: "font-medium",
+							children: preview.title
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+							variant: "ghost",
+							onClick: () => setPreview(null),
+							children: "Sluit"
+						})]
+					}), preview.mime.startsWith("image/") ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
+						src: preview.src,
+						alt: "",
+						className: "max-h-[70vh] w-full object-contain"
+					}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("a", {
+						className: "text-brass underline",
+						href: preview.src,
+						download: preview.title,
+						children: "Download pdf"
+					})]
+				})
+			})
+		]
+	});
+}
+function readFile$1(file) {
+	return new Promise((resolve, reject) => {
+		const reader = new FileReader();
+		reader.onload = () => resolve(String(reader.result ?? ""));
+		reader.onerror = () => reject(/* @__PURE__ */ new Error("Lezen mislukt."));
+		reader.readAsDataURL(file);
+	});
+}
+function BalanceView({ desk }) {
+	const snap = buildSnapshot(desk.journals, desk.company);
+	const balanced = Math.abs(snap.gap) < .05;
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: "flex flex-col gap-6",
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", { children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Kicker, { children: "Balans" }),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
+					className: "mt-2 font-display text-5xl",
+					children: "Sluit de zaak."
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+					className: "mt-2 max-w-2xl text-mist text-pretty",
+					children: [
+						"Activa links, schulden en eigen vermogen rechts, plus het resultaat van boekjaar ",
+						snap.range.label,
+						". ",
+						snap.taxNote
+					]
+				})
+			] }),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "grid gap-3 sm:grid-cols-3",
+				children: [
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Big, {
+						label: "Activa",
+						value: euroLabel(snap.assetTotal)
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Big, {
+						label: "Passiva + resultaat",
+						value: euroLabel(snap.liabilityTotal + snap.equityTotal + snap.result)
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Big, {
+						label: balanced ? "Verschil" : "Verschil, nakijken",
+						value: euroLabel(snap.gap)
+					})
+				]
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "grid gap-4 lg:grid-cols-2",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Column, {
+					title: "Activa",
+					rows: snap.assets,
+					total: snap.assetTotal
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "flex flex-col gap-4",
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Column, {
+						title: "Schulden",
+						rows: snap.liabilities,
+						total: snap.liabilityTotal
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Column, {
+						title: "Eigen vermogen",
+						rows: [...snap.equity, {
+							code: "res",
+							name: "Resultaat boekjaar",
+							amount: snap.result
+						}],
+						total: snap.equityTotal + snap.result
+					})]
+				})]
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Panel, { children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Kicker, { children: "Vereenvoudigde belasting" }),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "mt-3 font-display text-4xl tabular-nums",
+					children: euroLabel(snap.estimatedTax)
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+					className: "mt-2 max-w-2xl text-sm text-mist text-pretty",
+					children: [snap.taxNote, " Dit is geen aangifte."]
+				})
+			] })
+		]
+	});
+}
+function Big({ label, value }) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: "rounded-md border border-line bg-raised px-4 py-4",
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+			className: "text-xs tracking-widest text-mist uppercase",
+			children: label
+		}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+			className: "mt-2 font-display text-3xl tabular-nums",
+			children: value
+		})]
+	});
+}
+function Column({ title, rows, total }) {
+	const max = Math.max(1, ...rows.map((r) => Math.abs(r.amount)));
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Panel, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: "flex items-baseline justify-between",
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+			className: "font-display text-3xl",
+			children: title
+		}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+			className: "tabular-nums text-mist",
+			children: euroLabel(total)
+		})]
+	}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("ul", {
+		className: "mt-4 flex flex-col gap-3",
+		children: [rows.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", {
+			className: "text-sm text-mist",
+			children: "Nog niets op deze kant."
+		}), rows.map((row) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+			className: "flex justify-between gap-3 text-sm",
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+					className: "text-mist",
+					children: row.code
+				}),
+				" ",
+				row.name
+			] }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+				className: "tabular-nums",
+				children: euroLabel(row.amount)
+			})]
+		}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+			className: "mt-1 h-1.5 rounded-sm bg-ink",
+			children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+				className: "h-1.5 rounded-sm bg-brass",
+				style: { width: `${Math.min(100, Math.abs(row.amount) / max * 100)}%` }
+			})
+		})] }, row.code + row.name))]
+	})] });
+}
+function iso(d) {
+	return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+function daysBetween(today, date) {
+	const a = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());
+	const [y, m, d] = date.split("-").map(Number);
+	const b = Date.UTC(y, m - 1, d);
+	return Math.round((b - a) / 864e5);
+}
+function weekendNote(date) {
+	const [y, m, d] = date.split("-").map(Number);
+	const day = new Date(Date.UTC(y, m - 1, d)).getUTCDay();
+	if (day === 0 || day === 6) return " Die datum valt in het weekend. Intervat schuift vaak naar de eerstvolgende werkdag. Kijk na.";
+	return "";
+}
+function duties(company, today = /* @__PURE__ */ new Date()) {
+	const form = company?.legalForm ?? "bv";
+	const regime = company?.vatRegime ?? "quarterly";
+	const yearEnd = company?.yearEndMonth ?? 12;
+	const y = today.getFullYear();
+	const items = [];
+	if (regime !== "exempt") {
+		if (regime === "monthly") {
+			const thisMonth = new Date(y, today.getMonth(), 20);
+			const next = today.getDate() <= 20 ? thisMonth : new Date(y, today.getMonth() + 1, 20);
+			const label = new Date(next.getFullYear(), next.getMonth() - 1, 1).toLocaleDateString("nl-BE", {
+				month: "long",
+				year: "numeric"
+			});
+			items.push({
+				id: "vat-m",
+				title: "Btw-aangifte",
+				detail: `Maandaangifte voor ${label}. Uiterlijk de 20e, ook als alles nul is.${weekendNote(iso(next))}`,
+				date: iso(next)
+			});
+		} else {
+			const candidates = [
+				{
+					date: new Date(y, 0, 25),
+					period: `Q4 ${y - 1}`
+				},
+				{
+					date: new Date(y, 3, 25),
+					period: `Q1 ${y}`
+				},
+				{
+					date: new Date(y, 6, 25),
+					period: `Q2 ${y}`
+				},
+				{
+					date: new Date(y, 9, 25),
+					period: `Q3 ${y}`
+				},
+				{
+					date: new Date(y + 1, 0, 25),
+					period: `Q4 ${y}`
+				}
+			];
+			const pick = candidates.find((c) => daysBetween(today, iso(c.date)) >= -12) ?? candidates[candidates.length - 1];
+			items.push({
+				id: "vat-q",
+				title: `Btw-aangifte ${pick.period}`,
+				detail: `Kwartaalaangifte via Intervat, uiterlijk de 25e. Een maand zonder facturen is nog altijd een nihil-aangifte.${weekendNote(iso(pick.date))}`,
+				date: iso(pick.date)
+			});
+		}
+	} else items.push({
+		id: "vat-exempt",
+		title: "Btw-vrijstelling",
+		detail: "Onder de drempel van 25.000 euro omzet reken je geen btw aan en doe je geen periodieke aangifte. Je verliest wel de aftrek. De jaarlijkse listing blijft.",
+		date: iso(new Date(y, today.getMonth(), today.getDate()))
+	});
+	const listingYear = today.getMonth() > 2 || today.getMonth() === 2 && today.getDate() > 31 ? y + 1 : y;
+	items.push({
+		id: "listing",
+		title: "Klantenlisting",
+		detail: "Jaarlijkse opgave via Intervat, ook een nihil-listing als er geen Belgische btw-plichtige klanten waren. Drempel van de vrijstellingsregeling: 25.000 euro omzet.",
+		date: iso(new Date(listingYear, 2, 31))
+	});
+	const prepay = [
+		{
+			id: "va1",
+			title: "Voorafbetaling VA1",
+			date: new Date(y, 3, 10)
+		},
+		{
+			id: "va2",
+			title: "Voorafbetaling VA2",
+			date: new Date(y, 6, 10)
+		},
+		{
+			id: "va3",
+			title: "Voorafbetaling VA3",
+			date: new Date(y, 9, 10)
+		},
+		{
+			id: "va4",
+			title: "Voorafbetaling VA4",
+			date: new Date(y, 11, 20)
+		}
+	];
+	for (const slot of prepay) {
+		const date = iso(slot.date);
+		if (daysBetween(today, date) >= -20) items.push({
+			id: slot.id,
+			title: slot.title,
+			detail: "Zonder voorafbetalingen rekent de fiscus een vermeerdering. VA4 is de laatste kans van het jaar, op 20 december.",
+			date
+		});
+	}
+	if (isCompanyForm(form)) {
+		items.push({
+			id: "contrib",
+			title: "Vennootschapsbijdrage",
+			detail: "In 2026 is dat 409,30 euro als het balanstotaal van het voorlaatste boekjaar onder 879.163,44 euro zat, anders 1.022,38 euro. Starters kunnen onder voorwaarden de eerste jaren vrijstelling krijgen. Betaal vóór 31 december, tenzij je na 30 september oprichtte.",
+			date: iso(new Date(y, 11, 31))
+		});
+		const endYear = today.getMonth() + 1 > yearEnd ? y + 1 : y;
+		const endDay = new Date(endYear, yearEnd, 0).getDate();
+		const close = new Date(endYear, yearEnd - 1, endDay);
+		const av = new Date(close.getFullYear(), close.getMonth() + 6, close.getDate());
+		const nbb = new Date(close.getFullYear(), close.getMonth() + 7, close.getDate());
+		items.push({
+			id: "av",
+			title: "Algemene vergadering",
+			detail: "De jaarrekening moet binnen zes maanden na de afsluiting goedgekeurd worden. Kleine vennootschappen hoeven geen commissaris en geen formeel bestuursverslag.",
+			date: iso(av)
+		});
+		items.push({
+			id: "nbb",
+			title: "Neerlegging NBB",
+			detail: "Binnen zeven maanden na de afsluiting bij de Balanscentrale. Boekjaar tot 31 december betekent uiterlijk 31 juli. Micro-XBRL kost in 2026 67 euro, het verkorte schema 89,40 euro. Te laat indienen wordt duurder vanaf de negende maand.",
+			date: iso(nbb)
+		});
+		items.push({
+			id: "venb",
+			title: "Aangifte vennootschapsbelasting",
+			detail: "Via Biztax. Het tarief is 25%, of 20% op de eerste 100.000 euro winst voor een kleine vennootschap met minstens 50.000 euro bestuurdersbezoldiging in 2026. De belastbare winst is het boekhoudresultaat na fiscale correcties, niet de kassa.",
+			date: iso(nbb)
+		});
+	} else items.push({
+		id: "pb",
+		title: "Personenbelasting",
+		detail: "Een eenmanszaak dient een aangifte personenbelasting in, geen vennootschapsbelasting. Sociale bijdragen lopen via je sociaal verzekeringsfonds, op basis van je beroepsinkomen." + (company?.activityStatus === "hoofdberoep" ? " In hoofdberoep geldt een minimumbijdrage, ook bij lage inkomsten." : " In bijberoep gelden andere regels: onder een inkomensdrempel betaal je weinig of geen sociale bijdragen. Vraag de actuele drempel na bij je sociaal verzekeringsfonds."),
+		date: iso(new Date(y + (today.getMonth() > 5 ? 1 : 0), 5, 30))
+	});
+	return items.map((item) => ({
+		...item,
+		days: daysBetween(today, item.date)
+	})).filter((item) => item.days >= -18).sort((a, b) => a.days - b.days).slice(0, 6);
+}
+function overdue(invoices, today) {
+	const todayIso = iso(today);
+	return invoices.filter((i) => i.status === "sent" && i.dueDate < todayIso);
+}
+function dailyTips(snapshot, company, invoices, today = /* @__PURE__ */ new Date()) {
+	const tips = [];
+	const late = overdue(invoices, today);
+	if (late.length) tips.push({
+		id: "late",
+		tone: "act",
+		title: late.length === 1 ? "Eén factuur is te laat" : `${late.length} facturen zijn te laat`,
+		body: `${late.map((i) => i.number).join(", ")} staan nog open voorbij de vervaldag. Cash die niet binnen is, betaalt ook geen leveranciers. Laat de debiteurenbot een aanmaning schrijven, of bel zelf. Een herinnering is geen boeking.`
+	});
+	const soonVat = duties(company, today).find((d) => d.id.startsWith("vat") && d.days <= 14 && d.days >= -5);
+	if (soonVat && company?.vatRegime !== "exempt") tips.push({
+		id: "vat-soon",
+		tone: soonVat.days < 0 ? "act" : "watch",
+		title: soonVat.days < 0 ? "Btw-deadline net voorbij" : "Btw-deadline in zicht",
+		body: `${soonVat.title}: ${soonVat.detail} Netto positie in de boeken: ${snapshot.vatNet.toFixed(2)} euro ${snapshot.vatNet >= 0 ? "te storten" : "te ontvangen"}. Dat is een hulplijn, geen aangifte.`
+	});
+	const month = today.getMonth() + 1;
+	const companyForm = isCompanyForm(company?.legalForm);
+	if (companyForm && snapshot.profit > 8e3 && snapshot.directorPay < 5e4) tips.push({
+		id: "pay",
+		tone: "watch",
+		title: "Bezoldiging onder de lat van 2026",
+		body: `Er is ${snapshot.directorPay.toFixed(0)} euro bezoldiging geboekt. Voor het verlaagd tarief van 20% op de eerste 100.000 euro winst moet minstens één bestuurder, een natuurlijk persoon, minstens 50.000 euro bruto krijgen. Daaronder betaal je 25% op alles. Een loon optrekken kost ook sociale bijdragen. Reken beide, niet alleen de vennootschapsbelasting.`
+	});
+	if (snapshot.profit > 12e3 && month >= 10) tips.push({
+		id: "spend",
+		tone: "watch",
+		title: "Winst genoeg om het jaareinde nuchter te bekijken",
+		body: companyForm ? "Echte beroepskosten die je in dit boekjaar toch maakt (licenties, hardware, opleiding, een onderaannemer) horen vóór de afsluiting in de boeken, niet in januari. Dat verlaagt de grondslag. Een factuur verzinnen of een privé-uitgave vermommen is geen tip, dat is een probleem met de fiscus. Restaurant blijft beperkt aftrekbaar, autokosten ook." : "Zelfde regel in een eenmanszaak: echte beroepskosten van dit jaar verlagen je personenbelasting en vaak ook de sociale bijdragen. Enkel kosten die bij de zaak horen. Niet je vakantie."
+	});
+	if (companyForm && snapshot.profit > 1e5) tips.push({
+		id: "cliff",
+		tone: "watch",
+		title: "Je zit voorbij de schijf van 100.000",
+		body: "Boven 100.000 euro winst geldt 25%, ook als het verlaagd tarief op de eerste schijf speelt. Het maximale voordeel van die 20% is ongeveer 5.000 euro. Meer omzet is nog altijd meer winst. Laat je niet tot rare constructies praten door een afgerond getal."
+	});
+	if (snapshot.profit > 5e3 && snapshot.prepayments < snapshot.estimatedTax * .4 && month >= 6 && companyForm) tips.push({
+		id: "prepay",
+		tone: "act",
+		title: "Voorafbetalingen lopen achter op de winst",
+		body: `Geschatte vennootschapsbelasting, ruw: ${snapshot.estimatedTax.toFixed(0)} euro. Geboekte voorafbetalingen: ${snapshot.prepayments.toFixed(0)} euro. De vermeerdering bij geen of te late voorafbetaling is reëel. VA1 10 april, VA2 10 juli, VA3 10 oktober, VA4 20 december.`
+	});
+	if (company?.vatRegime === "exempt" && snapshot.income > 18e3) tips.push({
+		id: "threshold",
+		tone: "act",
+		title: "De vrijstellingsdrempel komt in zicht",
+		body: "25.000 euro omzet exclusief btw is de grens van de kleine-ondernemersregeling. Erop overgaan betekent btw aanrekenen én aftrekken. Dat is vaak gunstig zodra je zelf btw betaalt op kosten. Onder de drempel blijven is een keuze, geen automatisme."
+	});
+	if (snapshot.cash < 0) tips.push({
+		id: "cash",
+		tone: "act",
+		title: "De bankrekening staat onder nul in de boeken",
+		body: "Of er ontbreekt een inbreng, of er zijn kosten geboekt die de kas niet dekt. Kijk de rekening 5500 na voor je offertes belooft die je niet kunt voorfinancieren."
+	});
+	if (!tips.length) tips.push({
+		id: "calm",
+		tone: "ok",
+		title: "Geen brand op de brug",
+		body: "De cijfers schreeuwen niks. Bewaar bonnen en facturen tien jaar voor de fiscus, zeven jaar voor het boekhoudrecht. En dien een nihil-aangifte toch in. Stilte is geen vrijstelling."
+	});
+	return tips.slice(0, 3);
+}
+var TAX_GUIDE = [
+	{
+		title: "Wat een BV minstens moet bijhouden",
+		body: "Elke BV voert een dubbele boekhouding: dagboek, grootboek, inventaris. Er zijn drie maten. Micro: niet meer dan één van 10 VTE, 900.000 euro omzet, 450.000 euro balanstotaal. Klein: niet meer dan één van 50 VTE, 11,25 miljoen omzet, 6 miljoen balanstotaal. Die drempels gelden voor boekjaren vanaf 2024. Micro en klein leggen een korter schema neer en hebben geen commissaris nodig."
+	},
+	{
+		title: "Jaarrekening en neerlegging",
+		body: "De algemene vergadering keurt de jaarrekening goed binnen zes maanden na de afsluiting. Neerlegging bij de Balanscentrale van de NBB volgt binnen zeven maanden, dus 31 juli als je op 31 december afsluit. In 2026 kost XBRL ongeveer 67 euro voor het microschema, 89,40 euro voor het verkorte schema en 379,50 euro voor het volledige schema. Te laat wordt duurder: voor een kleine BV 151 euro vanaf de negende maand, 227 euro in de tiende tot twaalfde, 453 euro daarna."
+	},
+	{
+		title: "Vennootschapsbelasting 2026",
+		body: "Het gewone tarief is 25%. Kleine vennootschappen betalen 20% op de eerste 100.000 euro winst en 25% daarboven, als aan de voorwaarden voldaan is. De bekendste: minstens één bestuurder-natuurlijk persoon krijgt minstens 50.000 euro bruto bezoldiging. Dat was 45.000 euro. Het maximale voordeel van de schijf is 5.000 euro. De belastbare winst vertrekt van het boekhoudresultaat en wordt daarna gecorrigeerd. KADE maakt die aangifte niet."
+	},
+	{
+		title: "Voorafbetalingen en vennootschapsbijdrage",
+		body: "Data 2026: 10 april, 10 juli, 10 oktober en 20 december. Wie niets vooraf betaalt, krijgt een belastingvermeerdering. De vennootschapsbijdrage 2026 is 409,30 euro onder een balanstotaal van 879.163,44 euro in het referentiejaar, en 1.022,38 euro erboven. Uiterlijk 31 december, behalve bij oprichting na 30 september. Een starter kan de eerste drie jaar onder voorwaarden vrijgesteld zijn."
+	},
+	{
+		title: "Btw",
+		body: "IT-diensten in België zijn in de regel 21%. Kwartaalindieners dienen in tegen de 25e van de volgende maand, maandindieners tegen de 20e. Geen omzet is geen vrijstelling van aangifte: nihil blijft verplicht zolang je niet in de vrijstellingsregeling zit. Die regeling kan tot 25.000 euro jaaromzet. Je rekent dan geen btw aan, dient geen periodieke aangifte in, en trekt ook geen btw af. De klantenlisting volgt op 31 maart, ook als ze leeg is. Bewaar btw-stukken tien jaar."
+	},
+	{
+		title: "Eenmanszaak",
+		body: "Geen vennootschapsbelasting en geen neerlegging zoals een BV. Wel personenbelasting, sociale bijdragen als zelfstandige, en dezelfde btw-regels. Een vereenvoudigde boekhouding kan bij een natuurlijke persoon onder bepaalde omzetgrenzen. Zodra je een vennootschap opricht, geldt de dubbele boekhouding."
+	},
+	{
+		title: "Kosten naar voren halen",
+		body: "Een kost verlaagt de winst alleen als ze echt, beroepsmatig en van dit boekjaar is. Software, hardware, opleiding en onderaanneming die je toch nog dit jaar verbruikt, boek je beter vóór de afsluiting. Maaltijden in een vennootschap zijn klassiek beperkt tot 69%. Representatie is vaak niet aftrekbaar. Autokosten hangen af van CO2 en brandstof. KADE boekt het bedrag dat jij ingeeft. De fiscale correctie op de aangifte is werk voor je boekhouder, of voor Biztax met open ogen."
+	}
+];
+function BooksView({ desk, refresh, notice }) {
+	const [kind, setKind] = (0, import_react.useState)("expense");
+	const [date, setDate] = (0, import_react.useState)((/* @__PURE__ */ new Date()).toISOString().slice(0, 10));
+	const [memo, setMemo] = (0, import_react.useState)("");
+	const [account, setAccount] = (0, import_react.useState)("6110");
+	const [amount, setAmount] = (0, import_react.useState)("");
+	const [vatRate, setVatRate] = (0, import_react.useState)("21");
+	const [paid, setPaid] = (0, import_react.useState)(true);
+	const [busy, setBusy] = (0, import_react.useState)(false);
+	const [openGuide, setOpenGuide] = (0, import_react.useState)(TAX_GUIDE[0]?.title ?? null);
+	async function book() {
+		setBusy(true);
+		try {
+			const value = Number(amount.replace(",", "."));
+			if (kind === "expense") await postEntry({ data: {
+				kind: "expense",
+				date,
+				memo,
+				account,
+				amountEx: value,
+				vatRate: Number(vatRate),
+				paid,
+				supplierId: ""
+			} });
+			else if (kind === "asset") await postEntry({ data: {
+				kind: "asset",
+				date,
+				memo,
+				amountEx: value,
+				vatRate: Number(vatRate)
+			} });
+			else if (kind === "salary") await postEntry({ data: {
+				kind: "salary",
+				date,
+				memo,
+				amount: value
+			} });
+			else if (kind === "prepay") await postEntry({ data: {
+				kind: "prepay",
+				date,
+				amount: value
+			} });
+			else await postEntry({ data: {
+				kind: "capital",
+				date,
+				amount: value
+			} });
+			setMemo("");
+			setAmount("");
+			await refresh();
+			notice("Geboekt.");
+		} catch (error) {
+			notice(error instanceof Error ? error.message : "Boeken mislukt.");
+		} finally {
+			setBusy(false);
+		}
+	}
+	async function remove(id) {
+		const result = await deleteJournal({ data: id });
+		if (!result.ok) notice(result.error);
+		else {
+			await refresh();
+			notice("Boeking weg.");
+		}
+	}
+	const rows = [...desk.journals].reverse();
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: "flex flex-col gap-6",
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", { children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Kicker, { children: "Boeken" }),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
+					className: "mt-2 font-display text-5xl",
+					children: "Dubbel, of niet."
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "mt-2 max-w-2xl text-mist text-pretty",
+					children: "Elke boeking sluit: debet gelijk aan credit. Facturen maken hun eigen lijnen. Hier boek je kosten, bezoldiging, voorafbetalingen en inbreng."
+				})
+			] }),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "grid gap-4 lg:grid-cols-5",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Panel, {
+					className: "flex flex-col gap-3 lg:col-span-2",
+					children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+							label: "Soort",
+							children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Select, {
+								value: kind,
+								onChange: (e) => setKind(e.target.value),
+								children: [
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+										value: "expense",
+										children: "Kost"
+									}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+										value: "asset",
+										children: "Informaticamateriaal"
+									}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+										value: "salary",
+										children: "Bezoldiging"
+									}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+										value: "prepay",
+										children: "Voorafbetaling VenB"
+									}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+										value: "capital",
+										children: "Inbreng op de bank"
+									})
+								]
+							})
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+							label: "Datum",
+							children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+								type: "date",
+								value: date,
+								onChange: (e) => setDate(e.target.value)
+							})
+						}),
+						(kind === "expense" || kind === "asset" || kind === "salary") && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+							label: "Omschrijving",
+							children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+								value: memo,
+								onChange: (e) => setMemo(e.target.value)
+							})
+						}),
+						kind === "expense" && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+							label: "Rekening",
+							children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Select, {
+								value: account,
+								onChange: (e) => setAccount(e.target.value),
+								children: EXPENSE_ACCOUNTS.map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("option", {
+									value: item.code,
+									children: [
+										item.code,
+										" ",
+										item.name
+									]
+								}, item.code))
+							})
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+							label: kind === "expense" || kind === "asset" ? "Bedrag excl. btw" : "Bedrag",
+							children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+								inputMode: "decimal",
+								value: amount,
+								onChange: (e) => setAmount(e.target.value),
+								placeholder: "0,00"
+							})
+						}),
+						(kind === "expense" || kind === "asset") && desk.company?.vatRegime !== "exempt" && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+							label: "Btw",
+							children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Select, {
+								value: vatRate,
+								onChange: (e) => setVatRate(e.target.value),
+								children: [
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+										value: "21",
+										children: "21%"
+									}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+										value: "12",
+										children: "12%"
+									}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+										value: "6",
+										children: "6%"
+									}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+										value: "0",
+										children: "0%"
+									})
+								]
+							})
+						}),
+						kind === "expense" && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+							className: "flex min-h-11 items-center gap-2 text-sm",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+								type: "checkbox",
+								checked: paid,
+								onChange: (e) => setPaid(e.target.checked)
+							}), "Meteen betaald via de bank"]
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+							onClick: book,
+							disabled: busy,
+							children: "Boeken"
+						})
+					]
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Panel, {
+					className: "lg:col-span-3",
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Kicker, { children: "Journaal" }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("ul", {
+						className: "mt-3 divide-y divide-line",
+						children: [rows.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", {
+							className: "py-4 text-sm text-mist",
+							children: "Het journaal is leeg. Dat is eerlijk, niet gezellig."
+						}), rows.slice(0, 40).map((journal) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
+							className: "py-3",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+								className: "flex flex-wrap items-baseline justify-between gap-2",
+								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+									className: "text-sm",
+									children: [
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+											className: "text-mist",
+											children: journal.bookedOn.split("-").reverse().join("/")
+										}),
+										" ",
+										journal.memo
+									]
+								}), journal.source !== "invoice" && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+									type: "button",
+									className: "text-sm text-mist hover:text-ivory",
+									onClick: () => remove(journal.id),
+									children: "Wis"
+								})]
+							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+								className: "mt-1",
+								children: journal.lines.map((line) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
+									className: "flex justify-between text-xs text-mist tabular-nums",
+									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: [
+										line.account,
+										" ",
+										line.label
+									] }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: [
+										line.debit ? euroLabel(line.debit) : "",
+										" ",
+										line.credit ? `− ${euroLabel(line.credit)}` : ""
+									] })]
+								}, line.id))
+							})]
+						}, journal.id))]
+					})]
+				})]
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Panel, { children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Kicker, { children: "Belgische plichten, 2026" }),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "mt-2 text-sm text-mist",
+					children: "Samengevat uit de regels voor een kleine zaak. Geen advies op maat. De aangifte blijft van jou en je boekhouder."
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+					className: "mt-4 flex flex-col",
+					children: TAX_GUIDE.map((section) => {
+						const open = openGuide === section.title;
+						return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "border-t border-line",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+								type: "button",
+								className: "flex min-h-11 w-full items-center justify-between text-left",
+								onClick: () => setOpenGuide(open ? null : section.title),
+								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+									className: "font-medium",
+									children: section.title
+								}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+									className: "text-brass",
+									children: open ? "–" : "+"
+								})]
+							}), open && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+								className: "pb-4 text-sm text-mist text-pretty",
+								children: section.body
+							})]
+						}, section.title);
+					})
+				})
+			] })
+		]
+	});
+}
+/** Status voor de client: de sleutel zelf verlaat de server nooit. */
+var loadGrokBot = createServerFn({ method: "GET" }).middleware([authMiddleware]).handler(createSsrRpc("d0f16687a8231f46b908e7918e5cf468bb33bf55f40f2ebfdd9341f4d8860bf4"));
+var saveGrokBot = createServerFn({ method: "POST" }).middleware([authMiddleware]).validator((input) => {
+	const row = input ?? {};
+	const webhookUrl = str(row.webhookUrl, 2e3).trim();
+	if (webhookUrl && !validWebhookUrl(webhookUrl)) throw new Error("De webhook-URL moet met https:// beginnen.");
+	const headerMode = row.headerMode === "custom" ? "custom" : "bearer";
+	const headerName = str(row.headerName, 64).trim();
+	if (headerMode === "custom") authHeader("custom", headerName, "x");
+	return {
+		webhookUrl,
+		senderKey: str(row.senderKey, 2e3).trim(),
+		headerMode,
+		headerName
+	};
+}).handler(createSsrRpc("9624fddd33e312fbe878ebe6369f7bc7b9d9a13c7363a875edf208c1e773ec26"));
+var clearGrokKey = createServerFn({ method: "POST" }).middleware([authMiddleware]).handler(createSsrRpc("e2f23254d7630e573acce523f62d34d04cc04f424f2a3d2e89b8f7da0817f095"));
+/** POST naar de routine-webhook. Geeft de echte HTTP-status terug, nooit een gespeeld succes. */
+var sendToGrokBot = createServerFn({ method: "POST" }).middleware([authMiddleware]).validator((input) => {
+	const row = input ?? {};
+	const ctx = row.context ?? {};
+	return {
+		opdracht: str(row.opdracht, 4e3),
+		test: Boolean(row.test),
+		context: {
+			view: str(ctx.view, 60),
+			ids: Array.isArray(ctx.ids) ? ctx.ids.map((v) => str(v, 80)) : [],
+			samenvatting: str(ctx.samenvatting, 2e3)
+		}
+	};
+}).handler(createSsrRpc("4548fc64f900ae9030e6a90e0be78716217f340beb26c9ec7c3202926413fc04"));
+/** Opdrachtregel naar Grok Bot. Accepteert vrije tekst of '/grok …'. */
+function GrokCommand({ view, summary, notice }) {
+	const [line, setLine] = (0, import_react.useState)("");
+	const [busy, setBusy] = (0, import_react.useState)(false);
+	const [last, setLast] = (0, import_react.useState)(null);
+	async function send() {
+		const opdracht = parseGrokCommand(line) ?? line.trim();
+		if (!opdracht) return notice("Typ eerst een opdracht.");
+		setBusy(true);
+		try {
+			const res = await sendToGrokBot({ data: {
+				opdracht,
+				context: {
+					view,
+					samenvatting: summary ?? ""
+				}
+			} });
+			setLast({
+				ok: res.ok,
+				detail: res.detail
+			});
+			if (res.ok) setLine("");
+			notice(res.ok ? "Verstuurd naar Grok Bot." : res.detail);
+		} catch (error) {
+			notice(error instanceof Error ? error.message : "Versturen lukte niet.");
+		} finally {
+			setBusy(false);
+		}
+	}
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Panel, {
+		className: "flex flex-col gap-3",
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Kicker, { children: "Grok Bot" }),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+				className: "text-sm text-mist text-pretty",
+				children: [
+					"Stuur een opdracht naar je Grok Bot-assistent (ook als ",
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("code", { children: "/grok …" }),
+					"). Het antwoord komt in de Grok Bot-chat; hier zie je enkel of de opdracht aankwam. Alles staat in het Logboek onder Grok Bot."
+				]
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("form", {
+				className: "flex flex-wrap gap-2",
+				onSubmit: (e) => {
+					e.preventDefault();
+					send();
+				},
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+					className: "min-w-0 flex-1",
+					value: line,
+					onChange: (e) => setLine(e.target.value),
+					placeholder: "/grok vat de openstaande facturen samen"
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+					disabled: busy,
+					type: "submit",
+					children: busy ? "Versturen…" : "Stuur naar Grok Bot"
+				})]
+			}),
+			last && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: last.ok ? "text-sm text-mist" : "text-sm text-brass",
+				children: last.detail
+			})
+		]
+	});
+}
+function BotsView({ desk, refresh, notice }) {
+	const [active, setActive] = (0, import_react.useState)(desk.bots.find((b) => b.followed)?.id ?? null);
+	const [tasks, setTasks] = (0, import_react.useState)({});
+	const [busy, setBusy] = (0, import_react.useState)(null);
+	const [name, setName] = (0, import_react.useState)("");
+	const [role, setRole] = (0, import_react.useState)("");
+	const [brief, setBrief] = (0, import_react.useState)("");
+	const followed = desk.bots.filter((b) => b.followed);
+	const rest = desk.bots.filter((b) => !b.followed);
+	function taskOf(bot) {
+		return tasks[bot.id] ?? bot.task;
+	}
+	async function run(bot) {
+		const task = taskOf(bot).trim();
+		if (!task) return notice("Geef de bot eerst een opdracht.");
+		setBusy(bot.id);
+		try {
+			const result = await runBot({ data: {
+				id: bot.id,
+				task
+			} });
+			await refresh();
+			if (!result.ok) notice(result.error);
+		} catch (error) {
+			notice(error instanceof Error ? error.message : "De bot liep vast.");
+		} finally {
+			setBusy(null);
+		}
+	}
+	async function follow(bot, value) {
+		await saveBot({ data: {
+			id: bot.id,
+			name: bot.name,
+			role: bot.role,
+			brief: bot.brief,
+			task: taskOf(bot),
+			followed: value
+		} });
+		await refresh();
+	}
+	async function create() {
+		if (!name.trim()) return notice("Een bot zonder naam is een script.");
+		await saveBot({ data: {
+			id: "",
+			name,
+			role,
+			brief,
+			task: "",
+			followed: true
+		} });
+		setName("");
+		setRole("");
+		setBrief("");
+		await refresh();
+	}
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: "flex flex-col gap-6",
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", { children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Kicker, { children: "Bots" }),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
+					className: "mt-2 font-display text-5xl",
+					children: "Bemanning."
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "mt-2 max-w-xl text-mist text-pretty",
+					children: "Volg wie je nodig hebt. Geef een opdracht. Ze werken via Grok, met je cijfers erbij, en ze doen niets uit zichzelf."
+				})
+			] }),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GrokCommand, {
+				view: "bots",
+				summary: `Gevolgde bots: ${followed.map((b) => b.name).join(", ") || "geen"}`,
+				notice
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+				className: "font-display text-3xl",
+				children: "Op de kade"
+			}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "mt-4 grid gap-4 lg:grid-cols-2",
+				children: [followed.map((bot) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Panel, {
+					className: active === bot.id ? "border-brass" : "",
+					children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+							type: "button",
+							className: "w-full text-left",
+							onClick: () => setActive(bot.id),
+							children: [
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+									className: "text-xs tracking-widest text-brass uppercase",
+									children: bot.role
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+									className: "mt-1 font-display text-3xl",
+									children: bot.name
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+									className: "mt-2 text-sm text-mist text-pretty",
+									children: bot.brief
+								})
+							]
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Area, {
+							className: "mt-4",
+							value: taskOf(bot),
+							placeholder: "Opdracht",
+							onChange: (e) => setTasks((prev) => ({
+								...prev,
+								[bot.id]: e.target.value
+							}))
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "mt-3 flex flex-wrap gap-2",
+							children: [
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+									disabled: busy === bot.id,
+									onClick: () => run(bot),
+									children: busy === bot.id ? "Bezig…" : "Uitvoeren"
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+									variant: "ghost",
+									onClick: () => follow(bot, false),
+									children: "Niet meer volgen"
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+									variant: "ghost",
+									onClick: async () => {
+										await deleteBot({ data: bot.id });
+										await refresh();
+									},
+									children: "Weg"
+								})
+							]
+						}),
+						bot.lastResult && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: "mt-4 border-t border-line pt-4 text-sm whitespace-pre-wrap text-pretty",
+							children: bot.lastResult
+						})
+					]
+				}, bot.id)), followed.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "text-sm text-mist",
+					children: "Niemand gevolgd. Haal er een van de lijst."
+				})]
+			})] }),
+			rest.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+				className: "font-display text-3xl",
+				children: "Aan wal"
+			}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+				className: "mt-3 divide-y divide-line",
+				children: rest.map((bot) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
+					className: "flex flex-wrap items-center justify-between gap-3 py-3",
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+							className: "font-medium",
+							children: bot.name
+						}),
+						" ",
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+							className: "text-mist",
+							children: bot.role
+						})
+					] }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+						variant: "ghost",
+						onClick: () => follow(bot, true),
+						children: "Volgen"
+					})]
+				}, bot.id))
+			})] }),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Panel, {
+				className: "grid gap-3 md:grid-cols-2",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Kicker, { children: "Nieuwe bot" }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "md:col-span-2 grid gap-3 md:grid-cols-2",
+					children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+							label: "Naam",
+							children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+								value: name,
+								onChange: (e) => setName(e.target.value)
+							})
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+							label: "Rol",
+							children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+								value: role,
+								onChange: (e) => setRole(e.target.value)
+							})
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+							className: "md:col-span-2",
+							children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+								label: "Kader",
+								children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Area, {
+									value: brief,
+									onChange: (e) => setBrief(e.target.value)
+								})
+							})
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+							onClick: create,
+							children: "Bot aanmaken"
+						})
+					]
+				})]
+			})
+		]
+	});
+}
+function Bridge({ desk, go, refresh, notice }) {
+	const today = /* @__PURE__ */ new Date();
+	const day = brusselsToday(today);
+	const snapshot = buildSnapshot(desk.journals, desk.company, today);
+	const tips = dailyTips(snapshot, desk.company, desk.invoices, today);
+	const list = duties(desk.company, today);
+	const hour = Number(new Intl.DateTimeFormat("en-GB", {
+		timeZone: "Europe/Brussels",
+		hour: "numeric",
+		hourCycle: "h23"
+	}).format(today));
+	const hello = hour < 12 ? "Goedemorgen" : hour < 18 ? "Goedemiddag" : "Goedenavond";
+	const openInvoices = desk.invoices.filter((i) => i.status === "sent");
+	const queue = priorityQueue(desk.tasks, day);
+	const late = queue.filter((task) => isLate(task, day));
+	const high = queue.filter((task) => task.priority === "hoog");
+	const cip = queue.filter((task) => task.kind === "cip");
+	const active = desk.projects.filter((project) => project.status === "actief");
+	const fleet = fleetSnapshot(desk.assets, day);
+	const fails = desk.incidents.filter((item) => item.status !== "gesloten");
+	const [writing, setWriting] = (0, import_react.useState)(false);
+	async function write(force) {
+		setWriting(true);
+		try {
+			const result = await writeMorningBrief({ data: { force } });
+			if (!result.ok) {
+				notice(result.error);
+				return;
+			}
+			await refresh();
+			notice(result.cached ? "De briefing van vandaag stond er al." : "Briefing geschreven.");
+		} catch (error) {
+			notice(error instanceof Error ? error.message : "De briefing lukte niet.");
+		} finally {
+			setWriting(false);
+		}
+	}
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: "flex flex-col gap-6",
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", {
+				className: "flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Kicker, { children: "Brug" }),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("h1", {
+						className: "mt-2 font-display text-5xl text-ivory",
+						children: [hello, "."]
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+						className: "mt-2 max-w-xl text-mist text-pretty",
+						children: [
+							desk.company ? desk.company.name : "De zaakfiche is nog leeg.",
+							" Boekjaar ",
+							snapshot.range.label,
+							". Eerst het open werk, daarna de cijfers."
+						]
+					})
+				] }), !desk.company && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+					type: "button",
+					onClick: () => go("zaak"),
+					className: "min-h-11 rounded-sm bg-brass px-4 text-sm font-medium text-brass-ink",
+					children: "Zaakfiche invullen"
+				})]
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Panel, { children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "flex flex-wrap items-baseline justify-between gap-3",
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Kicker, { children: ["Ochtendbriefing · ", formatDay(day)] }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+						type: "button",
+						onClick: () => go("taken"),
+						className: "text-sm text-mist hover:text-ivory",
+						children: "Naar taken"
+					})]
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "mt-4 grid grid-cols-3 gap-3",
+					children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Mini, {
+							label: "Open",
+							value: String(queue.length)
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Mini, {
+							label: "Te laat",
+							value: String(late.length)
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Mini, {
+							label: "Prio",
+							value: String(high.length)
+						})
+					]
+				}),
+				queue.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "mt-4 text-sm text-mist",
+					children: "Geen open taken. Geen CIP. Geen prio. Een stille kade is ook een briefing."
+				}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+					className: "mt-4 divide-y divide-line",
+					children: queue.slice(0, 6).map((task) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
+						className: "flex flex-wrap items-baseline justify-between gap-2 py-3",
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: [
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+								className: task.priority === "hoog" ? "text-brass" : "text-mist",
+								children: task.priority
+							}),
+							task.kind === "cip" && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+								className: "ml-2 text-xs tracking-widest text-brass uppercase",
+								children: "CIP"
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+								className: "ml-2 font-medium",
+								children: task.title
+							})
+						] }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+							className: "text-sm text-mist",
+							children: [
+								personName(desk.people, task.assigneeId),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+									className: "mx-1.5",
+									children: "·"
+								}),
+								projectName(desk.projects, task.projectId),
+								task.dueOn && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+										className: "mx-1.5",
+										children: "·"
+									}),
+									isLate(task, day) ? "te laat " : "",
+									formatDay(task.dueOn)
+								] })
+							]
+						})]
+					}, task.id))
+				}),
+				queue.length > 6 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+					className: "mt-2 text-sm text-mist",
+					children: [
+						"En nog ",
+						queue.length - 6,
+						" open. Die staan op Taken."
+					]
+				}),
+				cip.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+					className: "mt-3 text-sm text-mist",
+					children: [
+						cip.length,
+						" open CIP-punt",
+						cip.length === 1 ? "" : "en",
+						". Verbeteren is geen los briefje."
+					]
+				}),
+				active.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+					className: "mt-4 flex flex-col gap-2",
+					children: active.slice(0, 4).map((project) => {
+						const progress = projectProgress(desk.tasks, project.id);
+						return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+							type: "button",
+							onClick: () => go("projecten"),
+							className: "flex w-full items-center justify-between gap-3 text-left text-sm",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: project.name }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+								className: "tabular-nums text-mist",
+								children: [
+									progress.done,
+									"/",
+									progress.total,
+									" · ",
+									progress.pct,
+									"%"
+								]
+							})]
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+							className: "mt-1 h-1.5 overflow-hidden rounded-sm bg-ink",
+							children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+								className: "h-full bg-brass",
+								style: { width: `${progress.pct}%` }
+							})
+						})] }, project.id);
+					})
+				}),
+				desk.briefing && desk.briefing.day === day && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "mt-4 whitespace-pre-wrap border-t border-line pt-4 text-sm text-pretty",
+					children: desk.briefing.body
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+					className: "mt-4 flex flex-wrap gap-2",
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+						disabled: writing,
+						onClick: () => write(Boolean(desk.briefing)),
+						children: writing ? "Loots schrijft…" : desk.briefing ? "Briefing herschrijven" : "Laat Loots de briefing schrijven"
+					})
+				})
+			] }),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Panel, { children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "flex flex-wrap items-baseline justify-between gap-3",
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Kicker, { children: "Inventaris" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+						type: "button",
+						onClick: () => go("inventaris"),
+						className: "text-sm text-mist hover:text-ivory",
+						children: "Naar inventaris"
+					})]
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "mt-4 grid grid-cols-3 gap-3",
+					children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Mini, {
+							label: "Boekwaarde",
+							value: euroLabel(fleet.book),
+							compact: true
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Mini, {
+							label: "Lease",
+							value: euroLabel(fleet.monthlyLease),
+							compact: true
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Mini, {
+							label: "Storingen",
+							value: String(fails.length)
+						})
+					]
+				}),
+				fails.length === 0 && fleet.ending.length === 0 && fleet.broken.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "mt-4 text-sm text-mist",
+					children: "Geen open storing, geen contract dat afloopt, geen defect stuk."
+				}) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("ul", {
+					className: "mt-4 divide-y divide-line",
+					children: [
+						fails.map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
+							className: "flex flex-wrap items-baseline justify-between gap-2 py-3",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+								className: "text-xs tracking-widest text-brass uppercase",
+								children: "Storing"
+							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+								className: "ml-2 font-medium",
+								children: item.title
+							})] }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+								className: "text-sm text-mist",
+								children: [
+									item.status === "opvolging" ? "in opvolging" : "open",
+									" · ",
+									projectName(desk.projects, item.projectId)
+								]
+							})]
+						}, item.id)),
+						fleet.broken.filter((asset) => !fails.some((item) => item.assetId === asset.id)).map((asset) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
+							className: "flex flex-wrap items-baseline justify-between gap-2 py-3",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+								className: "text-xs tracking-widest text-brass uppercase",
+								children: "Defect"
+							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+								className: "ml-2 font-medium",
+								children: asset.name
+							})] }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+								className: "text-sm text-mist",
+								children: personName(desk.people, asset.holderId)
+							})]
+						}, asset.id)),
+						fleet.ending.map((asset) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
+							className: "flex flex-wrap items-baseline justify-between gap-2 py-3",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+								className: "text-mist",
+								children: "Lease"
+							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+								className: "ml-2 font-medium",
+								children: asset.name
+							})] }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+								className: "text-sm text-mist",
+								children: asset.endsOn && daysUntil(day, asset.endsOn) < 0 ? "voorbij" : `einde ${asset.endsOn ? formatDay(asset.endsOn) : ""}`
+							})]
+						}, `end-${asset.id}`))
+					]
+				})
+			] }),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "grid gap-3 sm:grid-cols-2 xl:grid-cols-4",
+				children: [
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Stat, {
+						label: "Omzet",
+						value: euroLabel(snapshot.income),
+						hint: "Geboekt in dit boekjaar"
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Stat, {
+						label: "Kosten",
+						value: euroLabel(snapshot.expense),
+						hint: "Zonder btw"
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Stat, {
+						label: "Resultaat",
+						value: euroLabel(snapshot.profit),
+						hint: snapshot.profit >= 0 ? "Winst vóór fiscale correcties" : "Verlies in de boeken"
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Stat, {
+						label: "Bank",
+						value: euroLabel(snapshot.cash),
+						hint: "Rekening 5500"
+					})
+				]
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "grid gap-4 lg:grid-cols-5",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Panel, {
+					className: "lg:col-span-3",
+					children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Kicker, { children: "Loots, vandaag" }),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+							className: "mt-4 flex flex-col gap-4",
+							children: tips.map((tip) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
+								className: "border-l-2 border-brass pl-4",
+								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+									className: "font-display text-2xl",
+									children: tip.title
+								}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+									className: "mt-1 text-sm text-mist text-pretty",
+									children: tip.body
+								})]
+							}, tip.id))
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+							type: "button",
+							onClick: () => go("loots"),
+							className: "mt-5 text-sm text-brass underline-offset-4 hover:underline",
+							children: "Laat Loots dit uitwerken"
+						})
+					]
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Panel, {
+					className: "lg:col-span-2",
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Kicker, { children: "Kalender" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+						className: "mt-4 flex flex-col gap-3",
+						children: list.map((duty) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
+							className: "flex gap-3",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+								className: "w-14 shrink-0 font-display text-xl tabular-nums text-brass",
+								children: duty.days < 0 ? "laat" : duty.days === 0 ? "nu" : `${duty.days}d`
+							}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+								className: "block text-sm font-medium",
+								children: duty.title
+							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+								className: "block text-sm text-mist",
+								children: duty.date.split("-").reverse().join("/")
+							})] })]
+						}, duty.id))
+					})]
+				})]
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Panel, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "flex items-baseline justify-between gap-3",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Kicker, { children: "Open posten" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+					type: "button",
+					onClick: () => go("facturen"),
+					className: "text-sm text-mist hover:text-ivory",
+					children: "Naar facturen"
+				})]
+			}), openInvoices.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "mt-4 text-sm text-mist",
+				children: "Geen verstuurde facturen die nog openstaan. Ofwel is de kade leeg, ofwel is iedereen betaald."
+			}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+				className: "mt-4 divide-y divide-line",
+				children: openInvoices.map((invoice) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
+					className: "flex flex-wrap items-baseline justify-between gap-2 py-3",
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+						className: "font-medium",
+						children: invoice.number
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+						className: "ml-2 text-mist",
+						children: invoice.clientName
+					})] }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+						className: "text-sm tabular-nums text-mist",
+						children: ["vervalt ", invoice.dueDate.split("-").reverse().join("/")]
+					})]
+				}, invoice.id))
+			})] })
+		]
+	});
+}
+function Mini({ label, value, compact }) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: "min-w-0",
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+			className: "text-xs tracking-widest text-mist uppercase",
+			children: label
+		}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+			className: compact ? "mt-1 font-display text-2xl tabular-nums" : "mt-1 font-display text-4xl tabular-nums",
+			children: value
+		})]
+	});
+}
+function Stat({ label, value, hint }) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: "rounded-md border border-line bg-raised px-4 py-4",
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "text-xs tracking-widest text-mist uppercase",
+				children: label
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "mt-2 font-display text-4xl tabular-nums",
+				children: value
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "mt-1 text-sm text-mist",
+				children: hint
+			})
+		]
+	});
+}
+var empty$2 = {
+	name: "",
+	legalForm: "eenmanszaak",
+	vatNumber: "",
+	enterpriseNumber: "",
+	address: "",
+	city: "",
+	email: "",
+	iban: "",
+	vatRegime: "quarterly",
+	activityStatus: "bijberoep",
+	yearEndMonth: 12
+};
+function CompanyView({ desk, refresh, notice }) {
+	const [form, setForm] = (0, import_react.useState)(desk.company ?? empty$2);
+	const [busy, setBusy] = (0, import_react.useState)(false);
+	function set(key, value) {
+		setForm((prev) => ({
+			...prev,
+			[key]: value
+		}));
+	}
+	async function save() {
+		setBusy(true);
+		try {
+			await saveCompany({ data: form });
+			await refresh();
+			notice("Zaakfiche bewaard.");
+		} catch (error) {
+			notice(error instanceof Error ? error.message : "Bewaren mislukt.");
+		} finally {
+			setBusy(false);
+		}
+	}
+	async function demo(which) {
+		setBusy(true);
+		try {
+			if (which === "seed") await seedDemo();
+			else await clearDemo();
+			await refresh();
+			notice(which === "seed" ? "Demoboekjaar staat klaar. Wis het wanneer de echte cijfers beginnen." : "Demogegevens weg.");
+		} catch (error) {
+			notice(error instanceof Error ? error.message : "Mislukt.");
+		} finally {
+			setBusy(false);
+		}
+	}
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: "flex flex-col gap-6",
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", { children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Kicker, { children: "Zaak" }),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
+					className: "mt-2 font-display text-5xl",
+					children: "De fiche"
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "mt-2 max-w-xl text-mist text-pretty",
+					children: "Dit staat op je facturen en stuurt de fiscale kalender. Een BV krijgt andere plichten dan een eenmanszaak."
+				})
+			] }),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Panel, {
+				className: "grid gap-4 md:grid-cols-2",
+				children: [
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+						label: "Naam",
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+							value: form.name,
+							onChange: (e) => set("name", e.target.value)
+						})
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+						label: "Rechtsvorm",
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Select, {
+							value: form.legalForm,
+							onChange: (e) => set("legalForm", e.target.value),
+							children: [
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+									value: "bv",
+									children: "BV"
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+									value: "eenmanszaak",
+									children: "Eenmanszaak"
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+									value: "vof",
+									children: "VOF"
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+									value: "commv",
+									children: "CommV"
+								})
+							]
+						})
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+						label: "Btw-nummer",
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+							value: form.vatNumber,
+							onChange: (e) => set("vatNumber", e.target.value),
+							placeholder: "BE0123.456.789"
+						})
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+						label: "Ondernemingsnummer",
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+							value: form.enterpriseNumber,
+							onChange: (e) => set("enterpriseNumber", e.target.value)
+						})
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+						label: "Adres",
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+							value: form.address,
+							onChange: (e) => set("address", e.target.value)
+						})
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+						label: "Gemeente",
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+							value: form.city,
+							onChange: (e) => set("city", e.target.value)
+						})
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+						label: "E-mail",
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+							value: form.email,
+							onChange: (e) => set("email", e.target.value)
+						})
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+						label: "IBAN",
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+							value: form.iban,
+							onChange: (e) => set("iban", e.target.value)
+						})
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+						label: "Btw-regime",
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Select, {
+							value: form.vatRegime,
+							onChange: (e) => set("vatRegime", e.target.value),
+							children: [
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+									value: "quarterly",
+									children: "Btw-plichtig, kwartaalaangifte"
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+									value: "monthly",
+									children: "Btw-plichtig, maandaangifte"
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+									value: "exempt",
+									children: "Vrijstellingsregeling kleine ondernemingen (art. 56bis)"
+								})
+							]
+						})
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+						label: "Sociaal statuut",
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Select, {
+							value: form.activityStatus,
+							onChange: (e) => set("activityStatus", e.target.value),
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+								value: "bijberoep",
+								children: "Zelfstandige in bijberoep"
+							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+								value: "hoofdberoep",
+								children: "Zelfstandige in hoofdberoep"
+							})]
+						})
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+						label: "Afsluitmaand",
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Select, {
+							value: String(form.yearEndMonth),
+							onChange: (e) => set("yearEndMonth", Number(e.target.value)),
+							children: Array.from({ length: 12 }, (_, i) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+								value: i + 1,
+								children: i + 1
+							}, i + 1))
+						})
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+						className: "md:col-span-2",
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+							onClick: save,
+							disabled: busy,
+							children: "Fiche bewaren"
+						})
+					})
+				]
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Panel, { children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Kicker, { children: "Demokade" }),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "mt-3 max-w-2xl text-sm text-mist text-pretty",
+					children: "Een fictieve BV, Noorderlicht IT, met omzet, een openstaande factuur, kosten en een voorafbetaling. Handig om de terminal te zien ademen. Het is geen echte klant en geen echte bon."
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "mt-4 flex flex-wrap gap-2",
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+						variant: "ghost",
+						disabled: busy,
+						onClick: () => demo("seed"),
+						children: "Demoboekjaar laden"
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+						variant: "ghost",
+						disabled: busy,
+						onClick: () => demo("clear"),
+						children: "Demo wissen"
+					})]
+				})
+			] })
+		]
+	});
+}
+var prompts$2 = [
+	"Loont een elektrische leasewagen nog in 2026, of een brandstofwagen?",
+	"Een klantenevent: wat is aftrekbaar en wat is verworpen?",
+	"Welke investering dit jaar, welke over drie jaar?",
+	"Zit de bezoldiging aan 50.000 euro voor het verlaagd tarief?"
+];
+function FiscalView({ desk, refresh, notice }) {
+	const [text, setText] = (0, import_react.useState)("");
+	const [busy, setBusy] = (0, import_react.useState)(false);
+	async function send(value) {
+		const message = value.trim();
+		if (!message) return;
+		setBusy(true);
+		setText("");
+		try {
+			const result = await askSchaar({ data: { text: message } });
+			await refresh();
+			if (!result.ok) notice(result.text);
+		} catch (error) {
+			notice(error instanceof Error ? error.message : "Schaar zwijgt.");
+		} finally {
+			setBusy(false);
+		}
+	}
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: "flex min-h-[70vh] flex-col gap-6",
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", { children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Kicker, { children: "Finance · Schaar" }),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
+					className: "mt-2 font-display text-5xl",
+					children: "Zo weinig mogelijk. Wettelijk."
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "mt-2 max-w-xl text-mist text-pretty",
+					children: "Eén taak: de druk omlaag. Lease, een klantenevent, een investering op korte, middellange of lange termijn. Geen verzonnen factuur, geen privé op de zaak. Hij dient niets in."
+				})
+			] }),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "flex flex-1 flex-col gap-4",
+				children: [desk.fiscal.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "font-display text-3xl",
+					children: "Zeg waar het geld nu naartoe lekt."
+				}), desk.fiscal.map((message) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("article", {
+					className: message.role === "assistant" ? "max-w-3xl" : "ml-auto max-w-xl rounded-md bg-raised px-4 py-3",
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						className: "text-xs tracking-widest text-mist uppercase",
+						children: message.role === "assistant" ? "Schaar" : "Jij"
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						className: "mt-1 whitespace-pre-wrap text-pretty",
+						children: message.content
+					})]
+				}, message.id))]
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+				className: "flex flex-wrap gap-2",
+				children: prompts$2.map((prompt) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+					type: "button",
+					className: "min-h-11 rounded-sm border border-line px-3 text-left text-sm text-mist hover:border-brass hover:text-ivory",
+					onClick: () => send(prompt),
+					children: prompt
+				}, prompt))
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("form", {
+				className: "flex flex-col gap-2 sm:flex-row",
+				onSubmit: (e) => {
+					e.preventDefault();
+					send(text);
+				},
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+					value: text,
+					onChange: (e) => setText(e.target.value),
+					placeholder: "Vraag aan Schaar",
+					className: "min-h-11 flex-1 rounded-sm border border-line bg-ink px-3 text-sm outline-none focus:border-brass"
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+					type: "submit",
+					disabled: busy,
+					children: busy ? "Rekent…" : "Stuur"
+				})]
+			})
+		]
+	});
+}
+function recognition() {
+	if (typeof window === "undefined") return null;
+	const host = window;
+	const Ctor = host.SpeechRecognition ?? host.webkitSpeechRecognition;
+	return Ctor ? new Ctor() : null;
+}
+function canSpeak() {
+	return typeof window !== "undefined" && "speechSynthesis" in window;
+}
+function canListen() {
+	return recognition() !== null;
+}
+function loadVoices() {
+	if (!canSpeak()) return Promise.resolve([]);
+	const synth = window.speechSynthesis;
+	const ready = synth.getVoices();
+	if (ready.length) return Promise.resolve(ready);
+	return new Promise((resolve) => {
+		const done = () => {
+			synth.removeEventListener("voiceschanged", done);
+			resolve(synth.getVoices());
+		};
+		synth.addEventListener("voiceschanged", done);
+		window.setTimeout(done, 800);
+	});
+}
+function pickVoice(voices, settings) {
+	return voices.find((voice) => voice.voiceURI === settings.voiceUri) ?? voices.find((voice) => voice.lang === settings.lang) ?? voices.find((voice) => voice.lang.toLowerCase().startsWith("nl")) ?? null;
+}
+function silence() {
+	if (canSpeak()) window.speechSynthesis.cancel();
+}
+function speak(text, settings) {
+	if (!canSpeak()) return;
+	const synth = window.speechSynthesis;
+	synth.cancel();
+	const clean = text.replace(/[*#_`>]/g, "").replace(/\s+/g, " ").trim().slice(0, 2500);
+	if (!clean) return;
+	const parts = clean.length < 280 ? [clean] : clean.split(/(?<=[.!?])\s+/).reduce((groups, sentence) => {
+		const last = groups[groups.length - 1];
+		if (!last || last.length + sentence.length > 240) groups.push(sentence);
+		else groups[groups.length - 1] = `${last} ${sentence}`;
+		return groups;
+	}, []);
+	const voice = pickVoice(synth.getVoices(), settings);
+	for (const part of parts) {
+		const utterance = new SpeechSynthesisUtterance(part);
+		if (voice) utterance.voice = voice;
+		utterance.lang = voice?.lang || settings.lang || "nl-BE";
+		utterance.rate = settings.rate;
+		utterance.pitch = settings.pitch;
+		utterance.volume = settings.volume;
+		synth.speak(utterance);
+	}
+}
+function listen(lang, onUpdate, onEnd) {
+	const rec = recognition();
+	if (!rec) return null;
+	rec.lang = lang || "nl-BE";
+	rec.interimResults = true;
+	rec.continuous = false;
+	rec.onresult = (event) => {
+		const list = event.results;
+		const last = list[list.length - 1];
+		onUpdate({
+			transcript: last?.[0]?.transcript ?? "",
+			isFinal: Boolean(last?.isFinal)
+		});
+	};
+	rec.onerror = onEnd;
+	rec.onend = onEnd;
+	try {
+		rec.start();
+	} catch {
+		onEnd();
+		return null;
+	}
+	return { stop: () => rec.stop() };
+}
+var LANGS = [
+	["nl-BE", "Nederlands (België)"],
+	["nl-NL", "Nederlands (Nederland)"],
+	["fr-BE", "Frans (België)"],
+	["en-GB", "Engels (VK)"],
+	["en-US", "Engels (VS)"],
+	["de-DE", "Duits"]
+];
+function VoiceForm({ desk, refresh, notice }) {
+	const [form, setForm] = (0, import_react.useState)(desk.voice);
+	const [voices, setVoices] = (0, import_react.useState)([]);
+	const [busy, setBusy] = (0, import_react.useState)(false);
+	(0, import_react.useEffect)(() => {
+		let live = true;
+		loadVoices().then((list) => {
+			if (live) setVoices(list);
+		});
+		return () => {
+			live = false;
+		};
+	}, []);
+	const ordered = [...voices].sort((a, b) => {
+		const rank = (voice) => voice.lang.toLowerCase().startsWith("nl") ? 0 : 1;
+		return rank(a) - rank(b) || a.lang.localeCompare(b.lang) || a.name.localeCompare(b.name, "nl");
+	});
+	function set(key, value) {
+		setForm((prev) => ({
+			...prev,
+			[key]: value
+		}));
+	}
+	async function save() {
+		setBusy(true);
+		try {
+			await saveVoice({ data: form });
+			await refresh();
+			notice("Stem staat.");
+		} catch (error) {
+			notice(error instanceof Error ? error.message : "De stem bleef liggen.");
+		} finally {
+			setBusy(false);
+		}
+	}
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Panel, {
+		className: "flex max-w-xl flex-col gap-4",
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+				label: "Naam van de hoofdstem",
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+					value: form.agentName,
+					maxLength: 24,
+					onChange: (e) => set("agentName", e.target.value)
+				})
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+				label: "Stem van deze computer",
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Select, {
+					value: form.voiceUri,
+					onChange: (e) => set("voiceUri", e.target.value),
+					disabled: !canSpeak() || ordered.length === 0,
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+						value: "",
+						children: "Automatisch, bij voorkeur Nederlands"
+					}), ordered.map((voice) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("option", {
+						value: voice.voiceURI,
+						children: [
+							voice.name,
+							" · ",
+							voice.lang
+						]
+					}, voice.voiceURI))]
+				})
+			}),
+			!canSpeak() && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "text-sm text-mist",
+				children: "Deze browser leest niet voor. Het gesprek blijft tekst."
+			}),
+			canSpeak() && ordered.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "text-sm text-mist",
+				children: "Nog geen stemmen geladen. Even wachten, of de pagina herladen."
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+				label: "Taal waarin je inspreekt",
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Select, {
+					value: form.lang,
+					onChange: (e) => set("lang", e.target.value),
+					children: LANGS.map(([id, label]) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+						value: id,
+						children: label
+					}, id))
+				})
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Slider, {
+				label: "Snelheid",
+				min: .7,
+				max: 1.5,
+				step: .05,
+				value: form.rate,
+				onChange: (value) => set("rate", value)
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Slider, {
+				label: "Toonhoogte",
+				min: .7,
+				max: 1.4,
+				step: .05,
+				value: form.pitch,
+				onChange: (value) => set("pitch", value)
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Slider, {
+				label: "Volume",
+				min: .2,
+				max: 1,
+				step: .05,
+				value: form.volume,
+				onChange: (value) => set("volume", value)
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+				className: "flex min-h-11 items-center gap-2 text-sm",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+					type: "checkbox",
+					checked: form.autoSpeak,
+					onChange: (e) => set("autoSpeak", e.target.checked)
+				}), "Antwoorden hardop"]
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+				className: "flex min-h-11 items-center gap-2 text-sm",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+					type: "checkbox",
+					checked: form.sendOnListen,
+					onChange: (e) => set("sendOnListen", e.target.checked)
+				}), "Na het inspreken meteen sturen"]
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "flex flex-wrap gap-2",
+				children: [
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+						disabled: busy,
+						onClick: save,
+						children: busy ? "Bewaren…" : "Stem bewaren"
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+						variant: "ghost",
+						disabled: !canSpeak(),
+						onClick: () => speak(`Dit is ${form.agentName || "de hoofdstem"}. De kade is open.`, form),
+						children: "Test"
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+						variant: "ghost",
+						onClick: silence,
+						children: "Stop"
+					})
+				]
+			})
+		]
+	});
+}
+function Slider({ label, min, max, step, value, onChange }) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+		className: "flex flex-col gap-1.5 text-sm",
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+			className: "flex justify-between text-mist",
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: label }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+				className: "tabular-nums",
+				children: value.toFixed(2)
+			})]
+		}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+			type: "range",
+			min,
+			max,
+			step,
+			value,
+			onChange: (e) => onChange(Number(e.target.value)),
+			className: "h-11 w-full accent-brass"
+		})]
+	});
+}
+var prompts$1 = [
+	"Wat ligt er vandaag open?",
+	"Welke storing wacht nog?",
+	"Loopt er een lease af?",
+	"Waar sta ik fiscaal deze maand?"
+];
+function HoofdView({ desk, refresh, notice }) {
+	const [text, setText] = (0, import_react.useState)("");
+	const [busy, setBusy] = (0, import_react.useState)(false);
+	const [hearing, setHearing] = (0, import_react.useState)(false);
+	const [tune, setTune] = (0, import_react.useState)(false);
+	const armed = (0, import_react.useRef)(false);
+	const ear = (0, import_react.useRef)(null);
+	const name = desk.voice.agentName || "Jarvis";
+	(0, import_react.useEffect)(() => () => {
+		ear.current?.stop();
+		silence();
+	}, []);
+	(0, import_react.useEffect)(() => {
+		if (!armed.current || !desk.voice.autoSpeak) return;
+		const last = desk.hoofd[desk.hoofd.length - 1];
+		if (last?.role !== "assistant") return;
+		armed.current = false;
+		speak(last.content, desk.voice);
+	}, [desk.hoofd, desk.voice]);
+	async function send(value) {
+		const message = value.trim();
+		if (!message || busy) return;
+		setBusy(true);
+		setText("");
+		armed.current = true;
+		try {
+			const result = await askHoofd({ data: { text: message } });
+			await refresh();
+			if (!result.ok) {
+				armed.current = false;
+				notice(result.text);
+				if (desk.voice.autoSpeak) speak(result.text, desk.voice);
+			}
+		} catch (error) {
+			armed.current = false;
+			notice(error instanceof Error ? error.message : `${name} zwijgt.`);
+		} finally {
+			setBusy(false);
+		}
+	}
+	function toggleEar() {
+		if (hearing) {
+			ear.current?.stop();
+			ear.current = null;
+			setHearing(false);
+			return;
+		}
+		if (!canListen()) return notice("Deze browser neemt geen spraak op. Typen werkt wel.");
+		const handle = listen(desk.voice.lang, ({ transcript, isFinal }) => {
+			setText(transcript);
+			if (isFinal && desk.voice.sendOnListen) send(transcript);
+		}, () => {
+			ear.current = null;
+			setHearing(false);
+		});
+		if (!handle) return notice("De microfoon weigerde.");
+		ear.current = handle;
+		setHearing(true);
+	}
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: "flex min-h-[70vh] flex-col gap-6",
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", {
+				className: "flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Kicker, { children: "Hoofdstem" }),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("h1", {
+						className: "mt-2 font-display text-5xl",
+						children: [name, "."]
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						className: "mt-2 max-w-xl text-mist text-pretty",
+						children: "Kort genoeg om hardop te volgen. Hij ziet de cijfers, het open werk, de storingen en de inventaris. De stem is die van deze computer, niet van een film."
+					})
+				] }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "flex flex-wrap gap-2",
+					children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+							variant: "ghost",
+							onClick: toggleEar,
+							children: hearing ? "Stop met luisteren" : "Spreek"
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+							variant: "ghost",
+							onClick: silence,
+							children: "Stil"
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+							variant: "ghost",
+							onClick: () => setTune((open) => !open),
+							children: tune ? "Stem dicht" : "Stem"
+						})
+					]
+				})]
+			}),
+			hearing && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+				className: "text-sm text-brass",
+				children: ["Luistert. ", desk.voice.sendOnListen ? "De zin gaat er meteen door." : "De zin blijft in het veld."]
+			}),
+			tune && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(VoiceForm, {
+				desk,
+				refresh,
+				notice
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "flex flex-1 flex-col gap-4",
+				children: [desk.hoofd.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "font-display text-3xl",
+					children: "Zeg wat je wilt weten. Hij heeft de kade al."
+				}), desk.hoofd.map((message) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("article", {
+					className: message.role === "assistant" ? "max-w-3xl" : "ml-auto max-w-xl rounded-md bg-raised px-4 py-3",
+					children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: "text-xs tracking-widest text-mist uppercase",
+							children: message.role === "assistant" ? name : "Jij"
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: "mt-1 whitespace-pre-wrap text-pretty",
+							children: message.content
+						}),
+						message.role === "assistant" && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+							type: "button",
+							className: "mt-2 text-sm text-mist hover:text-ivory",
+							onClick: () => speak(message.content, desk.voice),
+							children: "Lees voor"
+						})
+					]
+				}, message.id))]
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+				className: "flex flex-wrap gap-2",
+				children: prompts$1.map((prompt) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+					type: "button",
+					className: "min-h-11 rounded-sm border border-line px-3 text-left text-sm text-mist hover:border-brass hover:text-ivory",
+					onClick: () => send(prompt),
+					children: prompt
+				}, prompt))
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("form", {
+				className: "flex flex-col gap-2 sm:flex-row",
+				onSubmit: (e) => {
+					e.preventDefault();
+					send(text);
+				},
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+					value: text,
+					onChange: (e) => setText(e.target.value),
+					placeholder: hearing ? "Luistert…" : `Vraag aan ${name}`,
+					className: "min-h-11 flex-1 rounded-sm border border-line bg-ink px-3 text-sm outline-none focus:border-brass"
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+					type: "submit",
+					disabled: busy,
+					children: busy ? "Denkt…" : "Stuur"
+				})]
+			})
+		]
+	});
+}
+var empty$1 = {
+	id: "",
+	name: "",
+	kind: "eigendom",
+	category: "hardware",
+	ref: "",
+	vendor: "",
+	acquiredOn: "",
+	endsOn: "",
+	amount: "",
+	residual: "",
+	life: "36",
+	status: "gebruik",
+	holderId: "",
+	projectId: "",
+	note: ""
+};
+var statusLabel = {
+	gebruik: "In gebruik",
+	reserve: "Reserve",
+	defect: "Defect",
+	einde: "Einde"
+};
+function InventarisView({ desk, refresh, notice }) {
+	const today = brusselsToday();
+	const snap = fleetSnapshot(desk.assets, today);
+	const [form, setForm] = (0, import_react.useState)(empty$1);
+	const [busy, setBusy] = (0, import_react.useState)("");
+	const [failTitle, setFailTitle] = (0, import_react.useState)("");
+	const [failDetail, setFailDetail] = (0, import_react.useState)("");
+	const [failAsset, setFailAsset] = (0, import_react.useState)("");
+	const [failProject, setFailProject] = (0, import_react.useState)("");
+	const [failSeverity, setFailSeverity] = (0, import_react.useState)("hoog");
+	const [failDate, setFailDate] = (0, import_react.useState)(today);
+	const openFails = desk.incidents.filter((item) => item.status !== "gesloten");
+	const closedFails = desk.incidents.filter((item) => item.status === "gesloten");
+	const people = desk.people.filter((person) => person.active);
+	const preview = depreciation({
+		id: "",
+		name: form.name,
+		kind: form.kind,
+		category: form.category,
+		ref: "",
+		vendor: "",
+		acquiredOn: form.acquiredOn || null,
+		endsOn: form.endsOn || null,
+		amountEur: Number(form.amount.replace(",", ".")) || 0,
+		residualEur: Number(form.residual.replace(",", ".")) || 0,
+		lifeMonths: Number(form.life) || 36,
+		status: "gebruik",
+		holderId: null,
+		projectId: null,
+		note: ""
+	}, today);
+	function set(key, value) {
+		setForm((prev) => ({
+			...prev,
+			[key]: value
+		}));
+	}
+	function edit(asset) {
+		setForm({
+			id: asset.id,
+			name: asset.name,
+			kind: asset.kind,
+			category: asset.category,
+			ref: asset.ref,
+			vendor: asset.vendor,
+			acquiredOn: asset.acquiredOn ?? "",
+			endsOn: asset.endsOn ?? "",
+			amount: String(asset.amountEur || ""),
+			residual: String(asset.residualEur || ""),
+			life: String(asset.lifeMonths),
+			status: asset.status,
+			holderId: asset.holderId ?? "",
+			projectId: asset.projectId ?? "",
+			note: asset.note
+		});
+	}
+	async function save() {
+		setBusy("save");
+		try {
+			await saveAsset({ data: {
+				id: form.id,
+				name: form.name,
+				kind: form.kind,
+				category: form.category,
+				ref: form.ref,
+				vendor: form.vendor,
+				acquiredOn: form.acquiredOn,
+				endsOn: form.endsOn,
+				amountEur: form.amount,
+				residualEur: form.residual,
+				lifeMonths: form.life,
+				status: form.status,
+				holderId: form.holderId,
+				projectId: form.projectId,
+				note: form.note
+			} });
+			setForm(empty$1);
+			await refresh();
+			notice(form.id ? "Stuk bijgewerkt." : "Stuk op de inventaris.");
+		} catch (error) {
+			notice(error instanceof Error ? error.message : "Bewaren lukte niet.");
+		} finally {
+			setBusy("");
+		}
+	}
+	async function buy(id) {
+		setBusy(id);
+		try {
+			const result = await bookAssetPurchase({ data: { id } });
+			await refresh();
+			notice(result.already ? "De aankoop stond al in de boeken." : result.vatSkipped ? "Aankoop geboekt, zonder btw. Op een wagen is die aftrek beperkt." : "Aankoop geboekt op de bank.");
+		} catch (error) {
+			notice(error instanceof Error ? error.message : "De aankoop bleef liggen.");
+		} finally {
+			setBusy("");
+		}
+	}
+	async function depreciate() {
+		setBusy("dep");
+		try {
+			const result = await bookDepreciation();
+			await refresh();
+			notice(result.booked === 0 ? "Niets nieuws af te schrijven deze maand." : `${result.booked} afschrijving${result.booked === 1 ? "" : "en"} geboekt.`);
+		} catch (error) {
+			notice(error instanceof Error ? error.message : "Afschrijven lukte niet.");
+		} finally {
+			setBusy("");
+		}
+	}
+	async function fail() {
+		setBusy("fail");
+		try {
+			await saveIncident({ data: {
+				title: failTitle,
+				detail: failDetail,
+				assetId: failAsset,
+				projectId: failProject,
+				severity: failSeverity,
+				happenedOn: failDate
+			} });
+			setFailTitle("");
+			setFailDetail("");
+			await refresh();
+			notice("Storing staat open. De opvolging ligt op de brug.");
+		} catch (error) {
+			notice(error instanceof Error ? error.message : "De storing bleef liggen.");
+		} finally {
+			setBusy("");
+		}
+	}
+	async function move(id, status) {
+		setBusy(id);
+		try {
+			await setIncidentStatus({ data: {
+				id,
+				status
+			} });
+			await refresh();
+		} catch (error) {
+			notice(error instanceof Error ? error.message : "Status bleef staan.");
+		} finally {
+			setBusy("");
+		}
+	}
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: "flex flex-col gap-8",
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", { children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Kicker, { children: "Finance · Inventaris" }),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
+					className: "mt-2 font-display text-5xl",
+					children: "Wat de zaak heeft."
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "mt-2 max-w-xl text-mist text-pretty",
+					children: "Eigendom staat op de balans en schrijf je lineair af, een begonnen maand telt mee. Een operationele lease blijft buiten de balans. De factuur daarvan boek je als kost, met het btw-percentage dat bij het contract hoort."
+				})
+			] }),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "grid grid-cols-2 gap-3 lg:grid-cols-4",
+				children: [
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Tile, {
+						label: "Eigendom",
+						value: String(snap.owned),
+						hint: `Boekwaarde ${euroLabel(snap.book)}`
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Tile, {
+						label: "Lease",
+						value: String(snap.leased),
+						hint: `${euroLabel(snap.monthlyLease)} per maand`
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Tile, {
+						label: "Loopt af",
+						value: String(snap.ending.length),
+						hint: "Binnen 90 dagen"
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Tile, {
+						label: "Storingen",
+						value: String(openFails.length),
+						hint: "Opvolging op de brug"
+					})
+				]
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "grid gap-6 xl:grid-cols-5",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Panel, {
+					className: "flex flex-col gap-3 xl:col-span-2",
+					children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Kicker, { children: form.id ? "Bijwerken" : "Nieuw stuk" }),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+							label: "Naam",
+							children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+								value: form.name,
+								onChange: (e) => set("name", e.target.value),
+								placeholder: "Leasewagen, laptop, licentie"
+							})
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "grid grid-cols-2 gap-3",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+								label: "Soort",
+								children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Select, {
+									value: form.kind,
+									onChange: (e) => set("kind", e.target.value === "lease" ? "lease" : "eigendom"),
+									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+										value: "eigendom",
+										children: "Eigendom"
+									}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+										value: "lease",
+										children: "Lease"
+									})]
+								})
+							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+								label: "Categorie",
+								children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Select, {
+									value: form.category,
+									onChange: (e) => {
+										const category = asCat(e.target.value);
+										setForm((prev) => ({
+											...prev,
+											category,
+											life: String(defaultLife(category))
+										}));
+									},
+									children: ASSET_CATEGORIES.map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+										value: item.id,
+										children: item.label
+									}, item.id))
+								})
+							})]
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "grid grid-cols-2 gap-3",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+								label: form.kind === "lease" ? "Contract" : "Serienummer of plaat",
+								children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+									value: form.ref,
+									onChange: (e) => set("ref", e.target.value)
+								})
+							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+								label: "Leverancier",
+								children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+									value: form.vendor,
+									onChange: (e) => set("vendor", e.target.value)
+								})
+							})]
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "grid grid-cols-2 gap-3",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+								label: form.kind === "lease" ? "Start" : "Aankoop",
+								children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+									type: "date",
+									value: form.acquiredOn,
+									onChange: (e) => set("acquiredOn", e.target.value)
+								})
+							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+								label: form.kind === "lease" ? "Einde contract" : "Niet van toepassing",
+								children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+									type: "date",
+									value: form.endsOn,
+									disabled: form.kind !== "lease",
+									onChange: (e) => set("endsOn", e.target.value)
+								})
+							})]
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "grid grid-cols-2 gap-3",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+								label: form.kind === "lease" ? "Maand excl. btw" : "Aanschaf excl. btw",
+								children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+									inputMode: "decimal",
+									value: form.amount,
+									onChange: (e) => set("amount", e.target.value)
+								})
+							}), form.kind === "eigendom" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+								label: "Restwaarde",
+								children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+									inputMode: "decimal",
+									value: form.residual,
+									onChange: (e) => set("residual", e.target.value)
+								})
+							}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+								label: "Kost boeken op",
+								children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+									value: accountName(leaseCostAccount(form.category)),
+									readOnly: true
+								})
+							})]
+						}),
+						form.kind === "eigendom" && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+							label: "Afschrijving in maanden",
+							children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+								inputMode: "numeric",
+								value: form.life,
+								onChange: (e) => set("life", e.target.value)
+							})
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "grid grid-cols-2 gap-3",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+								label: "Bij wie",
+								children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Select, {
+									value: form.holderId,
+									onChange: (e) => set("holderId", e.target.value),
+									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+										value: "",
+										children: "Niemand"
+									}), people.map((person) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+										value: person.id,
+										children: person.name
+									}, person.id))]
+								})
+							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+								label: "Project",
+								children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Select, {
+									value: form.projectId,
+									onChange: (e) => set("projectId", e.target.value),
+									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+										value: "",
+										children: "Geen"
+									}), desk.projects.map((project) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+										value: project.id,
+										children: project.name
+									}, project.id))]
+								})
+							})]
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+							label: "Nota",
+							children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Area, {
+								value: form.note,
+								onChange: (e) => set("note", e.target.value)
+							})
+						}),
+						form.kind === "eigendom" && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+							className: "text-sm text-mist",
+							children: [
+								euroLabel(preview.monthly),
+								" per maand. Boekwaarde nu ",
+								euroLabel(preview.book),
+								", op rekening ",
+								assetAccount(form.category),
+								"."
+							]
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "flex flex-wrap gap-2",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+								disabled: busy === "save",
+								onClick: save,
+								children: busy === "save" ? "Bewaren…" : form.id ? "Bijwerken" : "Op de inventaris"
+							}), form.id && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+								variant: "ghost",
+								onClick: () => setForm(empty$1),
+								children: "Nieuw"
+							})]
+						})
+					]
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "flex flex-col gap-3 xl:col-span-3",
+					children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "flex flex-wrap items-center justify-between gap-3",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+								className: "font-display text-3xl",
+								children: "Register"
+							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+								variant: "ghost",
+								disabled: busy === "dep",
+								onClick: depreciate,
+								children: busy === "dep" ? "Boekt…" : "Afschrijvingen deze maand"
+							})]
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: "text-sm text-mist",
+							children: "Alleen stukken waarvan de aankoop al in de boeken staat. Eén maand per keer, niet met terugwerkende kracht. De kaart toont wel de boekwaarde na alle verlopen maanden."
+						}),
+						desk.assets.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: "text-sm text-mist",
+							children: "Nog niets. Een leasewagen of een laptop hoort hier, niet in een losse sheet."
+						}),
+						desk.assets.map((asset) => {
+							const dep = depreciation(asset, today);
+							const left = asset.endsOn ? daysUntil(today, asset.endsOn) : null;
+							return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Panel, {
+								className: asset.status === "defect" ? "border-brass" : "",
+								children: [
+									/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+										className: "flex flex-wrap items-baseline justify-between gap-2",
+										children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+											className: "text-xs tracking-widest text-brass uppercase",
+											children: [
+												asset.kind === "lease" ? "Lease" : "Eigendom",
+												" · ",
+												ASSET_CATEGORIES.find((item) => item.id === asset.category)?.label,
+												" · ",
+												statusLabel[asset.status]
+											]
+										}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
+											className: "mt-1 font-display text-3xl",
+											children: asset.name
+										})] }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+											className: "font-display text-3xl tabular-nums",
+											children: asset.kind === "lease" ? euroLabel(asset.amountEur) : euroLabel(dep.book)
+										})]
+									}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+										className: "mt-2 text-sm text-mist",
+										children: [
+											asset.kind === "lease" ? `${euroLabel(asset.amountEur)} per maand, buiten balans. Kost op ${leaseCostAccount(asset.category)}.` : `Aanschaf ${euroLabel(asset.amountEur)}. Afschrijving ${euroLabel(dep.monthly)}. Rekening ${assetAccount(asset.category)}.`,
+											asset.ref && ` ${asset.ref}.`,
+											asset.vendor && ` ${asset.vendor}.`
+										]
+									}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+										className: "mt-1 text-sm text-mist",
+										children: [
+											personName(desk.people, asset.holderId),
+											/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+												className: "mx-1.5",
+												children: "·"
+											}),
+											projectName(desk.projects, asset.projectId),
+											left != null && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+												className: "mx-1.5",
+												children: "·"
+											}), left < 0 ? "contract voorbij" : left === 0 ? "loopt vandaag af" : `einde over ${left} dagen`] }),
+											asset.acquiredOn && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
+												/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+													className: "mx-1.5",
+													children: "·"
+												}),
+												"sinds ",
+												formatDay(asset.acquiredOn)
+											] })
+										]
+									}),
+									asset.note && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+										className: "mt-2 text-sm text-pretty",
+										children: asset.note
+									}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+										className: "mt-3 flex flex-wrap gap-2",
+										children: [
+											/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+												variant: "ghost",
+												onClick: () => edit(asset),
+												children: "Wijzig"
+											}),
+											asset.kind === "eigendom" && asset.amountEur > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+												variant: "ghost",
+												disabled: busy === asset.id,
+												onClick: () => buy(asset.id),
+												children: "Aankoop boeken"
+											}),
+											[
+												"gebruik",
+												"reserve",
+												"defect",
+												"einde"
+											].map((status) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+												variant: "ghost",
+												disabled: asset.status === status || busy === asset.id,
+												onClick: async () => {
+													setBusy(asset.id);
+													try {
+														await saveAsset({ data: {
+															...toInput(asset),
+															status
+														} });
+														await refresh();
+													} catch (error) {
+														notice(error instanceof Error ? error.message : "Status bleef staan.");
+													} finally {
+														setBusy("");
+													}
+												},
+												children: statusLabel[status]
+											}, status)),
+											/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+												variant: "ghost",
+												onClick: async () => {
+													setBusy(asset.id);
+													try {
+														await deleteAsset({ data: { id: asset.id } });
+														await refresh();
+													} catch (error) {
+														notice(error instanceof Error ? error.message : "Weghalen lukte niet.");
+													} finally {
+														setBusy("");
+													}
+												},
+												children: "Weg"
+											})
+										]
+									})
+								]
+							}, asset.id);
+						})
+					]
+				})]
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+				className: "flex flex-col gap-4",
+				children: [
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", { children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Kicker, { children: "Storingen" }),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+							className: "mt-2 font-display text-4xl",
+							children: "Wat faalt, krijgt een naam."
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: "mt-2 max-w-xl text-sm text-mist text-pretty",
+							children: "Een oplossing of een stuk dat uitvalt, komt hier. Elke open storing maakt een CIP-opvolging. Die zie je op de brug, met deadline over zeven dagen. Sluiten haalt ze van de brug."
+						})
+					] }),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Panel, {
+						className: "grid gap-3 lg:grid-cols-2",
+						children: [
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+								label: "Wat faalde",
+								children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+									value: failTitle,
+									onChange: (e) => setFailTitle(e.target.value),
+									placeholder: "WMS-koppeling geeft timeouts"
+								})
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+								label: "Wanneer",
+								children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+									type: "date",
+									value: failDate,
+									onChange: (e) => setFailDate(e.target.value)
+								})
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+								label: "Stuk",
+								children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Select, {
+									value: failAsset,
+									onChange: (e) => setFailAsset(e.target.value),
+									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+										value: "",
+										children: "Geen stuk"
+									}), desk.assets.map((asset) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+										value: asset.id,
+										children: asset.name
+									}, asset.id))]
+								})
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+								label: "Project",
+								children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Select, {
+									value: failProject,
+									onChange: (e) => setFailProject(e.target.value),
+									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+										value: "",
+										children: "Geen project"
+									}), desk.projects.map((project) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+										value: project.id,
+										children: project.name
+									}, project.id))]
+								})
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+								label: "Ernst",
+								children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Select, {
+									value: failSeverity,
+									onChange: (e) => setFailSeverity(e.target.value === "normaal" ? "normaal" : "hoog"),
+									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+										value: "hoog",
+										children: "Hoog"
+									}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+										value: "normaal",
+										children: "Normaal"
+									})]
+								})
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+								label: "Wat er gebeurde",
+								children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+									value: failDetail,
+									onChange: (e) => setFailDetail(e.target.value),
+									placeholder: "Sinds de release van dinsdag, bij orderbevestiging"
+								})
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+								className: "lg:col-span-2",
+								children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+									disabled: busy === "fail",
+									onClick: fail,
+									children: busy === "fail" ? "Noteren…" : "Storing openen"
+								})
+							})
+						]
+					}),
+					openFails.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						className: "text-sm text-mist",
+						children: "Geen open storing. Dat is geen reden om er geen te noteren als er een is."
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+						className: "flex flex-col gap-3",
+						children: openFails.map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Panel, { children: [
+							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+								className: "text-xs tracking-widest text-brass uppercase",
+								children: [
+									item.severity,
+									" · ",
+									item.status === "opvolging" ? "In opvolging" : "Open"
+								]
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
+								className: "mt-1 font-display text-3xl",
+								children: item.title
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+								className: "mt-2 text-sm text-mist",
+								children: [
+									item.happenedOn ? formatDay(item.happenedOn) : "Geen datum",
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+										className: "mx-1.5",
+										children: "·"
+									}),
+									desk.assets.find((asset) => asset.id === item.assetId)?.name ?? "Geen stuk",
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+										className: "mx-1.5",
+										children: "·"
+									}),
+									projectName(desk.projects, item.projectId)
+								]
+							}),
+							item.detail && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+								className: "mt-2 text-sm text-pretty",
+								children: item.detail
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+								className: "mt-3 flex flex-wrap gap-2",
+								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+									variant: "ghost",
+									disabled: busy === item.id || item.status === "opvolging",
+									onClick: () => move(item.id, "opvolging"),
+									children: "In opvolging"
+								}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+									variant: "ghost",
+									disabled: busy === item.id,
+									onClick: () => move(item.id, "gesloten"),
+									children: "Sluiten"
+								})]
+							})
+						] }) }, item.id))
+					}),
+					closedFails.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("details", {
+						className: "text-sm text-mist",
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("summary", {
+							className: "min-h-11 cursor-pointer",
+							children: ["Gesloten, ", closedFails.length]
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+							className: "mt-2 flex flex-col gap-2",
+							children: closedFails.map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
+								className: "flex flex-wrap items-baseline justify-between gap-2",
+								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: item.title }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+									type: "button",
+									className: "min-h-11 text-ivory",
+									onClick: () => move(item.id, "open"),
+									children: "Heropen"
+								})]
+							}, item.id))
+						})]
+					})
+				]
+			})
+		]
+	});
+}
+function Tile({ label, value, hint }) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: "rounded-md border border-line bg-raised px-4 py-4",
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "text-xs tracking-widest text-mist uppercase",
+				children: label
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "mt-1 font-display text-4xl tabular-nums",
+				children: value
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "mt-1 text-sm text-mist",
+				children: hint
+			})
+		]
+	});
+}
+function asCat(value) {
+	if (value === "wagen" || value === "software" || value === "kantoor" || value === "overig") return value;
+	return "hardware";
+}
+function toInput(asset) {
+	return {
+		id: asset.id,
+		name: asset.name,
+		kind: asset.kind,
+		category: asset.category,
+		ref: asset.ref,
+		vendor: asset.vendor,
+		acquiredOn: asset.acquiredOn ?? "",
+		endsOn: asset.endsOn ?? "",
+		amountEur: asset.amountEur,
+		residualEur: asset.residualEur,
+		lifeMonths: asset.lifeMonths,
+		holderId: asset.holderId ?? "",
+		projectId: asset.projectId ?? "",
+		note: asset.note
+	};
+}
+var blank$1 = () => ({
+	description: "",
+	qty: 1,
+	unitExVat: 0,
+	vatRate: 21
+});
+function mailAddress(client) {
+	const line = [client.postalCode, client.city].filter(Boolean).join(" ");
+	const country = client.country && client.country !== "België" ? client.country : "";
+	return [
+		client.address,
+		line,
+		country
+	].filter(Boolean).join(", ");
+}
+function shift(iso, days) {
+	const date = /* @__PURE__ */ new Date(`${iso}T00:00:00Z`);
+	date.setUTCDate(date.getUTCDate() + days);
+	return date.toISOString().slice(0, 10);
+}
+function InvoicesView({ desk, refresh, notice }) {
+	const first = desk.clients.find((client) => client.active) ?? desk.clients[0];
+	const [clientId, setClientId] = (0, import_react.useState)(first?.id ?? "");
+	const [clientName, setClientName] = (0, import_react.useState)(first?.name ?? "");
+	const [clientVat, setClientVat] = (0, import_react.useState)(first?.vatNumber ?? "");
+	const [clientAddress, setClientAddress] = (0, import_react.useState)(first ? mailAddress(first) : "");
+	const [issueDate, setIssueDate] = (0, import_react.useState)((/* @__PURE__ */ new Date()).toISOString().slice(0, 10));
+	const [dueDate, setDueDate] = (0, import_react.useState)(shift((/* @__PURE__ */ new Date()).toISOString().slice(0, 10), first?.payDays || 30));
+	const [notes, setNotes] = (0, import_react.useState)("");
+	const [lines, setLines] = (0, import_react.useState)([blank$1()]);
+	const [editing, setEditing] = (0, import_react.useState)("");
+	const [busy, setBusy] = (0, import_react.useState)(false);
+	const exempt = desk.company?.vatRegime === "exempt";
+	const totals = (0, import_react.useMemo)(() => invoiceTotals(lines, exempt), [lines, exempt]);
+	const ogm = ogmFromSequence(desk.invoices.length + 1);
+	const choices = desk.clients.filter((client) => client.active || client.id === clientId);
+	function pickClient(id) {
+		setClientId(id);
+		const client = desk.clients.find((item) => item.id === id);
+		if (!client) return;
+		setClientName(client.name);
+		setClientVat(client.vatNumber);
+		setClientAddress(mailAddress(client));
+		setDueDate(shift(issueDate, client.payDays || 30));
+	}
+	(0, import_react.useEffect)(() => {
+		const stored = sessionStorage.getItem("kade-client");
+		if (!stored) return;
+		sessionStorage.removeItem("kade-client");
+		pickClient(stored);
+	}, []);
+	function patch(index, partial) {
+		setLines((prev) => prev.map((line, i) => i === index ? {
+			...line,
+			...partial
+		} : line));
+	}
+	function load(invoice) {
+		setEditing(invoice.id);
+		setClientId(invoice.clientId ?? "");
+		setClientName(invoice.clientName);
+		setClientVat(invoice.clientVat);
+		setClientAddress(invoice.clientAddress);
+		setIssueDate(invoice.issueDate);
+		setDueDate(invoice.dueDate);
+		setNotes(invoice.notes);
+		setLines(invoice.lines.length ? invoice.lines : [blank$1()]);
+	}
+	async function persist(book) {
+		setBusy(true);
+		try {
+			let id = clientId;
+			if (!id && clientName) id = (await saveClient({ data: {
+				id: "",
+				name: clientName,
+				vatNumber: clientVat,
+				email: "",
+				address: clientAddress,
+				city: ""
+			} })).id;
+			const saved = await saveInvoice({ data: {
+				id: editing,
+				clientId: id,
+				clientName,
+				clientVat,
+				clientAddress,
+				issueDate,
+				dueDate,
+				notes: exempt ? notes || "Vrijgesteld van btw, kleine onderneming." : notes,
+				lines,
+				book
+			} });
+			setEditing("");
+			setLines([blank$1()]);
+			await refresh();
+			notice(book ? "Factuur geboekt als vordering." : "Concept bewaard.");
+			return saved.id;
+		} catch (error) {
+			notice(error instanceof Error ? error.message : "Factuur mislukt.");
+			return "";
+		} finally {
+			setBusy(false);
+		}
+	}
+	const receiver = desk.clients.find((item) => item.id === clientId)?.peppolId || peppolIdFromKbo(clientVat);
+	async function downloadUbl(id) {
+		try {
+			const { filename, xml, problems } = await getInvoiceUbl({ data: { id } });
+			const url = URL.createObjectURL(new Blob([xml], { type: "application/xml" }));
+			const a = document.createElement("a");
+			a.href = url;
+			a.download = filename;
+			a.click();
+			URL.revokeObjectURL(url);
+			if (problems.length) notice(`UBL gedownload, maar nog niet Peppol-klaar: ${problems.join(" ")}`);
+		} catch (error) {
+			notice(error instanceof Error ? error.message : "UBL maken mislukt.");
+		}
+	}
+	async function sendPeppol(id) {
+		setBusy(true);
+		try {
+			const res = await sendInvoicePeppol({ data: { id } });
+			await refresh();
+			if (res.ok) return notice(res.message);
+			notice(`${res.message} Download de UBL (knop "UBL") en bezorg ze op een andere afgesproken manier.`);
+		} catch (error) {
+			notice(error instanceof Error ? error.message : "Peppol-verzending mislukt.");
+		} finally {
+			setBusy(false);
+		}
+	}
+	async function approveAndSend() {
+		const to = receiver ? `via Peppol naar ${receiver}` : "zonder Peppol-ID (enkel boeken, daarna UBL downloaden)";
+		if (!window.confirm(`Factuur definitief boeken en ${to} versturen? Een geboekte factuur kan je niet meer wijzigen.`)) return;
+		const id = await persist(true);
+		if (!id) return;
+		if (!receiver) return notice("Factuur geboekt. De klant heeft geen Peppol-ID: download de UBL en bezorg ze op een afgesproken manier.");
+		await sendPeppol(id);
+	}
+	async function pay(id) {
+		try {
+			await setInvoicePaid({ data: {
+				id,
+				paidOn: (/* @__PURE__ */ new Date()).toISOString().slice(0, 10)
+			} });
+			await refresh();
+			notice("Betaling geboekt op de bank.");
+		} catch (error) {
+			notice(error instanceof Error ? error.message : "Betaling mislukt.");
+		}
+	}
+	async function remove(id) {
+		await deleteDraftInvoice({ data: id });
+		if (editing === id) setEditing("");
+		await refresh();
+	}
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: "flex flex-col gap-6",
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", { children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Kicker, { children: "Facturen" }),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
+					className: "mt-2 font-display text-5xl",
+					children: "Papier dat telt."
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "mt-2 max-w-xl text-mist text-pretty",
+					children: "Een klant uit het bestand vult naam, btw, adres en vervaldag. Een losse naam wordt een nieuw bestand, zonder de rest van het dossier."
+				})
+			] }),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "grid items-start gap-4 xl:grid-cols-2",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Panel, {
+					className: "flex flex-col gap-3",
+					children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+							label: "Bestaande klant",
+							children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Select, {
+								value: clientId,
+								onChange: (e) => pickClient(e.target.value),
+								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+									value: "",
+									children: "Nieuwe klant"
+								}), choices.map((client) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+									value: client.id,
+									children: client.name
+								}, client.id))]
+							})
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+							label: "Klant",
+							children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+								value: clientName,
+								onChange: (e) => setClientName(e.target.value)
+							})
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "grid gap-3 sm:grid-cols-2",
+							children: [
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+									label: "Btw klant",
+									children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+										value: clientVat,
+										onChange: (e) => setClientVat(e.target.value)
+									})
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+									label: "Adres",
+									children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+										value: clientAddress,
+										onChange: (e) => setClientAddress(e.target.value)
+									})
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+									label: "Datum",
+									children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+										type: "date",
+										value: issueDate,
+										onChange: (e) => setIssueDate(e.target.value)
+									})
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+									label: "Vervaldag",
+									children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+										type: "date",
+										value: dueDate,
+										onChange: (e) => setDueDate(e.target.value)
+									})
+								})
+							]
+						}),
+						lines.map((line, index) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "grid gap-2 border-t border-line pt-3 sm:grid-cols-4",
+							children: [
+								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+									className: "sm:col-span-2 text-sm",
+									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+										className: "text-mist",
+										children: "Omschrijving"
+									}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+										className: "mt-1",
+										value: line.description,
+										onChange: (e) => patch(index, { description: e.target.value })
+									})]
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+									className: "text-sm",
+									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+										className: "text-mist",
+										children: "Aantal"
+									}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+										className: "mt-1",
+										inputMode: "decimal",
+										value: String(line.qty),
+										onChange: (e) => patch(index, { qty: Number(e.target.value.replace(",", ".")) || 0 })
+									})]
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+									className: "text-sm",
+									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+										className: "text-mist",
+										children: "Prijs excl."
+									}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+										className: "mt-1",
+										inputMode: "decimal",
+										value: String(line.unitExVat),
+										onChange: (e) => patch(index, { unitExVat: Number(e.target.value.replace(",", ".")) || 0 })
+									})]
+								}),
+								!exempt && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+									className: "text-sm sm:col-span-2",
+									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+										className: "text-mist",
+										children: "Btw"
+									}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Select, {
+										className: "mt-1",
+										value: String(line.vatRate),
+										onChange: (e) => patch(index, { vatRate: Number(e.target.value) }),
+										children: [
+											/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+												value: "21",
+												children: "21%"
+											}),
+											/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+												value: "6",
+												children: "6%"
+											}),
+											/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+												value: "0",
+												children: "0%"
+											})
+										]
+									})]
+								})
+							]
+						}, index)),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "flex flex-wrap gap-2",
+							children: [
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+									variant: "ghost",
+									onClick: () => setLines((prev) => [...prev, blank$1()]),
+									children: "Lijn"
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+									variant: "ghost",
+									disabled: busy,
+									onClick: () => persist(false),
+									children: "Concept"
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+									variant: "ghost",
+									disabled: busy,
+									onClick: () => persist(true),
+									children: "Enkel boeken"
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+									disabled: busy,
+									onClick: approveAndSend,
+									children: "Factuur OK en stuur uit"
+								})
+							]
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+							label: "Nota",
+							children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+								value: notes,
+								onChange: (e) => setNotes(e.target.value)
+							})
+						})
+					]
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("article", {
+					className: "invoice-sheet rounded-md bg-ivory p-6 text-ink sm:p-8",
+					children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "flex items-start justify-between gap-4",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+									className: "font-display text-4xl",
+									children: desk.company?.name || "Je zaak"
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+									className: "mt-1 text-sm",
+									children: [
+										desk.company?.address,
+										" ",
+										desk.company?.city
+									]
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+									className: "text-sm",
+									children: desk.company?.vatNumber
+								})
+							] }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+								className: "text-right text-xs tracking-widest uppercase",
+								children: "Factuur"
+							})]
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "mt-8 grid gap-4 text-sm sm:grid-cols-2",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+									className: "text-xs tracking-widest uppercase opacity-60",
+									children: "Aan"
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+									className: "mt-1 font-medium",
+									children: clientName || "Klant"
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { children: clientAddress }),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { children: clientVat }),
+								receiver && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+									className: "text-xs opacity-60",
+									children: ["Peppol ", receiver]
+								})
+							] }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+								className: "sm:text-right",
+								children: [
+									/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", { children: ["Datum ", issueDate.split("-").reverse().join("/")] }),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", { children: ["Vervaldag ", dueDate.split("-").reverse().join("/")] }),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+										className: "mt-2 tabular-nums",
+										children: ogm
+									})
+								]
+							})]
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("table", {
+							className: "mt-8 w-full text-sm",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("thead", { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("tr", {
+								className: "border-b border-ink/20 text-left",
+								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("th", {
+									className: "py-2 font-medium",
+									children: "Omschrijving"
+								}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("th", {
+									className: "py-2 text-right font-medium",
+									children: "Excl."
+								})]
+							}) }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("tbody", { children: lines.map((line, index) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("tr", {
+								className: "border-b border-ink/10",
+								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("td", {
+									className: "py-2",
+									children: line.description || "—"
+								}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("td", {
+									className: "py-2 text-right tabular-nums",
+									children: euroLabel(line.qty * line.unitExVat)
+								})]
+							}, index)) })]
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "mt-4 ml-auto w-full max-w-xs text-sm",
+							children: [
+								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+									className: "flex justify-between",
+									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Excl. btw" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+										className: "tabular-nums",
+										children: euroLabel(totals.ex)
+									})]
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+									className: "flex justify-between",
+									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Btw" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+										className: "tabular-nums",
+										children: euroLabel(totals.vat)
+									})]
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+									className: "mt-2 flex justify-between font-medium",
+									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Totaal" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+										className: "tabular-nums",
+										children: euroLabel(totals.incl)
+									})]
+								})
+							]
+						}),
+						desk.company?.iban && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+							className: "mt-6 text-sm",
+							children: [
+								"Te betalen op ",
+								desk.company.iban,
+								" met vermelding ",
+								ogm,
+								"."
+							]
+						}),
+						notes && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: "mt-3 text-sm",
+							children: notes
+						})
+					]
+				})]
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("ul", {
+				className: "flex flex-col gap-2",
+				children: [desk.invoices.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", {
+					className: "text-sm text-mist",
+					children: "Nog geen factuur."
+				}), desk.invoices.map((invoice) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
+					className: "flex flex-wrap items-center justify-between gap-2 rounded-sm border border-line px-3 py-3 text-sm",
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+							className: "font-medium",
+							children: invoice.number
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+							className: "ml-2 text-mist",
+							children: invoice.clientName
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+							className: "ml-2 text-mist",
+							children: invoice.status === "paid" ? "betaald" : invoice.status === "sent" ? "open" : "concept"
+						}),
+						invoice.status !== "draft" && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+							className: `ml-2 ${invoice.peppolStatus === "fout" ? "text-red-400" : "text-mist"}`,
+							title: invoice.peppolMessage,
+							children: invoice.peppolStatus === "verzonden" ? "· verzonden via Peppol" : invoice.peppolStatus === "fout" ? "· Peppol-fout" : "· niet via Peppol"
+						})
+					] }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+						className: "flex flex-wrap items-center gap-2",
+						children: [
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+								className: "tabular-nums text-mist",
+								children: euroLabel(invoiceTotals(invoice.lines, exempt).incl)
+							}),
+							invoice.status === "draft" && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+								variant: "ghost",
+								onClick: () => load(invoice),
+								children: "Open"
+							}),
+							invoice.status === "draft" && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+								variant: "ghost",
+								onClick: () => remove(invoice.id),
+								children: "Weg"
+							}),
+							invoice.status === "sent" && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+								variant: "ghost",
+								onClick: () => pay(invoice.id),
+								children: "Betaald"
+							}),
+							invoice.status !== "draft" && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+								variant: "ghost",
+								onClick: () => downloadUbl(invoice.id),
+								children: "UBL"
+							}),
+							invoice.status !== "draft" && invoice.peppolStatus !== "verzonden" && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+								variant: "ghost",
+								disabled: busy,
+								onClick: () => sendPeppol(invoice.id),
+								children: "Verstuur via Peppol"
+							})
+						]
+					})]
+				}, invoice.id))]
+			})
+		]
+	});
+}
+function GrokLog() {
+	const [log, setLog] = (0, import_react.useState)(null);
+	(0, import_react.useEffect)(() => {
+		loadGrokBot().then((r) => setLog(r.log)).catch(() => setLog([]));
+	}, []);
+	if (!log) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+		className: "text-sm text-mist",
+		children: "Laden…"
+	});
+	if (log.length === 0) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+		className: "text-sm text-mist",
+		children: "Nog geen opdrachten naar Grok Bot gestuurd."
+	});
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+		className: "flex flex-col gap-2",
+		children: log.map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
+			className: "rounded-sm border border-line px-3 py-3",
+			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+					className: "text-xs tracking-widest text-mist uppercase",
+					children: [
+						new Date(item.createdAt).toLocaleString("nl-BE"),
+						" · ",
+						item.view || "—",
+						" ·",
+						" ",
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+							className: item.ok ? "text-ivory" : "text-brass",
+							children: item.status == null ? "niet bereikt" : `HTTP ${item.status}`
+						})
+					]
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "mt-1 whitespace-pre-wrap text-pretty",
+					children: item.opdracht
+				}),
+				item.detail && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "mt-1 text-sm text-mist",
+					children: item.detail
+				})
+			]
+		}, item.id))
+	});
+}
+function when(value) {
+	const [y, m, d] = value.slice(0, 10).split("-");
+	if (!y || !m || !d) return value;
+	const time = value.length >= 16 ? value.slice(11, 16) : "";
+	return time ? `${d}/${m}/${y} ${time}` : `${d}/${m}/${y}`;
+}
+function LogboekView({ desk }) {
+	const [kind, setKind] = (0, import_react.useState)("research");
+	const [current, setCurrent] = (0, import_react.useState)("");
+	const research = desk.researches;
+	const runs = desk.runs;
+	const agents = [
+		...desk.messages.map((item) => ({
+			...item,
+			who: "Loots"
+		})),
+		...desk.fiscal.map((item) => ({
+			...item,
+			who: "Schaar"
+		})),
+		...desk.hoofd.map((item) => ({
+			...item,
+			who: desk.voice.agentName || "Jarvis"
+		}))
+	].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+	const empty = kind === "grok" ? false : kind === "research" ? research.length === 0 : kind === "bots" ? runs.length === 0 : agents.length === 0;
+	const selectedResearch = research.find((item) => item.id === current) ?? research[0];
+	const selectedRun = runs.find((item) => item.id === current) ?? runs[0];
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: "flex flex-col gap-6",
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", { children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Kicker, { children: "Logboek" }),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
+					className: "mt-2 font-display text-5xl",
+					children: "Wat er gezegd is, blijft."
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "mt-2 max-w-xl text-mist text-pretty",
+					children: "Research, botopdrachten en de gesprekken met Loots, Schaar en de hoofdstem. Bonnen en facturen blijven in het archief."
+				})
+			] }),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+				className: "flex gap-2 overflow-x-auto",
+				children: [
+					["research", "Research"],
+					["bots", "Bots"],
+					["agents", "Agents"],
+					["grok", "Grok Bot"]
+				].map(([id, label]) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+					type: "button",
+					onClick: () => {
+						setKind(id);
+						setCurrent("");
+					},
+					className: cn("min-h-11 shrink-0 rounded-sm px-3 text-sm", kind === id ? "bg-brass text-brass-ink" : "border border-line text-mist"),
+					children: label
+				}, id))
+			}),
+			empty && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "text-sm text-mist",
+				children: "Nog niets in dit vak. Een gesprek landt hier vanzelf."
+			}),
+			kind === "grok" && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(GrokLog, {}),
+			kind === "research" && research.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "grid gap-4 lg:grid-cols-3",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+					className: "flex flex-col gap-2",
+					children: research.map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+						type: "button",
+						onClick: () => setCurrent(item.id),
+						className: cn("w-full rounded-sm border px-3 py-3 text-left", selectedResearch?.id === item.id ? "border-brass" : "border-line"),
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+							className: "block font-medium",
+							children: item.title
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+							className: "block text-xs text-mist",
+							children: when(item.createdAt)
+						})]
+					}) }, item.id))
+				}), selectedResearch && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("article", {
+					className: "lg:col-span-2",
+					children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+							className: "font-display text-4xl",
+							children: selectedResearch.title
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: "mt-3 text-sm text-mist",
+							children: selectedResearch.question
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: "mt-4 whitespace-pre-wrap text-pretty",
+							children: selectedResearch.answer
+						})
+					]
+				})]
+			}),
+			kind === "bots" && runs.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "grid gap-4 lg:grid-cols-3",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+					className: "flex flex-col gap-2",
+					children: runs.map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+						type: "button",
+						onClick: () => setCurrent(item.id),
+						className: cn("w-full rounded-sm border px-3 py-3 text-left", selectedRun?.id === item.id ? "border-brass" : "border-line"),
+						children: [
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+								className: "block text-xs tracking-widest text-brass uppercase",
+								children: item.botName
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+								className: "mt-1 block font-medium",
+								children: item.task
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+								className: "block text-xs text-mist",
+								children: when(item.createdAt)
+							})
+						]
+					}) }, item.id))
+				}), selectedRun && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("article", {
+					className: "lg:col-span-2",
+					children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: "text-xs tracking-widest text-brass uppercase",
+							children: selectedRun.botName
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+							className: "mt-2 font-display text-4xl",
+							children: selectedRun.task
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: "mt-4 whitespace-pre-wrap text-pretty",
+							children: selectedRun.result
+						})
+					]
+				})]
+			}),
+			kind === "agents" && agents.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+				className: "flex flex-col gap-4",
+				children: agents.map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("article", {
+					className: item.role === "assistant" ? "max-w-3xl" : "ml-auto max-w-xl rounded-md bg-raised px-4 py-3",
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+						className: "text-xs tracking-widest text-mist uppercase",
+						children: [
+							item.role === "assistant" ? item.who : "Jij",
+							" · ",
+							when(item.createdAt)
+						]
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						className: "mt-1 whitespace-pre-wrap text-pretty",
+						children: item.content
+					})]
+				}, item.id))
+			})
+		]
+	});
+}
+var prompts = [
+	"Wat moet ik deze week fiscaal doen?",
+	"Waar lekt de marge?",
+	"Schrijf een aanmaning voor de openstaande facturen.",
+	"Welke echte kost kan ik nog dit boekjaar naar voren halen?"
+];
+function LootsView({ desk, refresh, notice }) {
+	const [text, setText] = (0, import_react.useState)("");
+	const [busy, setBusy] = (0, import_react.useState)(false);
+	async function send(value) {
+		const message = value.trim();
+		if (!message) return;
+		setBusy(true);
+		setText("");
+		try {
+			const result = await askLoots({ data: { text: message } });
+			await refresh();
+			if (!result.ok) notice(result.text);
+		} catch (error) {
+			notice(error instanceof Error ? error.message : "Loots zwijgt.");
+		} finally {
+			setBusy(false);
+		}
+	}
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: "flex min-h-[70vh] flex-col gap-6",
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", { children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Kicker, { children: "Hoofdagent" }),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
+					className: "mt-2 font-display text-5xl",
+					children: "Loots."
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "mt-2 max-w-xl text-mist text-pretty",
+					children: "De stuurman. Hij ziet je boekjaar, niet je inbox, tenzij je die erbij haalt via de post of een bot. Droog, en hij dient geen aangifte in."
+				})
+			] }),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "flex flex-1 flex-col gap-4",
+				children: [desk.messages.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "font-display text-3xl text-ivory",
+					children: "Zeg wat je wilt weten. Hij heeft de cijfers al."
+				}), desk.messages.map((message) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("article", {
+					className: message.role === "assistant" ? "max-w-3xl" : "ml-auto max-w-xl rounded-md bg-raised px-4 py-3",
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						className: "text-xs tracking-widest text-mist uppercase",
+						children: message.role === "assistant" ? "Loots" : "Jij"
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						className: "mt-1 whitespace-pre-wrap text-pretty",
+						children: message.content
+					})]
+				}, message.id))]
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+				className: "flex flex-wrap gap-2",
+				children: prompts.map((prompt) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+					type: "button",
+					className: "min-h-11 rounded-sm border border-line px-3 text-left text-sm text-mist hover:border-brass hover:text-ivory",
+					onClick: () => send(prompt),
+					children: prompt
+				}, prompt))
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("form", {
+				className: "flex flex-col gap-2 sm:flex-row",
+				onSubmit: (e) => {
+					e.preventDefault();
+					send(text);
+				},
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+					value: text,
+					onChange: (e) => setText(e.target.value),
+					placeholder: "Vraag aan Loots",
+					className: "min-h-11 flex-1 rounded-sm border border-line bg-ink px-3 text-sm outline-none focus:border-brass"
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+					type: "submit",
+					disabled: busy,
+					children: busy ? "Denkt…" : "Stuur"
+				})]
+			})
+		]
+	});
+}
+var MESSAGE_RULES = [
+	{
+		needles: ["not_connected", "failed_precondition"],
+		kind: "not_connected",
+		message: "Connect this connector in Grok to load your data."
+	},
+	{
+		needles: ["scope_denied"],
+		kind: "scope_denied",
+		message: "This view isn't available — the app requested a tool outside its grant."
+	},
+	{
+		needles: ["access_denied"],
+		kind: "access_denied",
+		message: "You don't have access to this data."
+	}
+];
+function matchMessageRule(raw) {
+	return MESSAGE_RULES.find((rule) => rule.needles.some((needle) => raw.includes(needle)));
+}
+function classifyCallToolError(result) {
+	if (result.ok) return null;
+	const detail = result.errorMessage || void 0;
+	const raw = (result.errorMessage ?? "").toLowerCase();
+	if (isConnectorPending(result)) return {
+		kind: "pending",
+		message: "Connecting to your data…",
+		detail
+	};
+	if (raw.includes("missing_connector_token")) return {
+		kind: "error",
+		message: "Open this app from Grok to load your data.",
+		detail
+	};
+	if (isLoginRequired(result)) return {
+		kind: "login",
+		message: "Continue with Grok to load your data.",
+		detail
+	};
+	const rule = matchMessageRule(raw);
+	if (rule) return {
+		kind: rule.kind,
+		message: rule.message,
+		detail
+	};
+	return {
+		kind: "error",
+		message: detail ?? "Something went wrong. Try again.",
+		detail
+	};
+}
+var getConnectorReadiness = createServerFn({ method: "POST" }).handler(createSsrRpc("ac303419f3bd6f94ee837f95e91005a600278deed4876cb96a25aa0d69185951"));
+var READINESS_PROBE_DELAYS_MS = [
+	1e3,
+	2e3,
+	3e3,
+	5e3
+];
+var READINESS_PROBE_MAX_TOTAL_MS = 18e4;
+function readinessProbeDelayMs(attempt) {
+	return READINESS_PROBE_DELAYS_MS[Math.min(Math.max(attempt, 0), READINESS_PROBE_DELAYS_MS.length - 1)];
+}
+function readinessProbeExhausted(startedAtMs, nowMs) {
+	return nowMs - startedAtMs >= READINESS_PROBE_MAX_TOTAL_MS;
+}
+var READINESS_PROBE_TIMEOUT_MS = 1e4;
+function withTimeout(promise, ms) {
+	return new Promise((resolve) => {
+		const timer = setTimeout(() => resolve(null), ms);
+		const settle = (value) => {
+			clearTimeout(timer);
+			resolve(value);
+		};
+		promise.then(settle, () => settle(null));
+	});
+}
+async function isConnectorReady() {
+	return (await withTimeout(getConnectorReadiness(), READINESS_PROBE_TIMEOUT_MS))?.ready === true;
+}
+/**
+* While `waiting` is true (a connector call returned `pending`), probes the
+* server for the connector token and calls `refetch` once it is present. The
+* probe is a header check on the app's own server — it never reaches the gate.
+* A `connector-token-ready` bridge event from the Grok preview chrome triggers
+* `refetch` immediately. A top-level page (download/export, local dev, the
+* sandbox's own `npm run preview`) is not framed by any preview, so no token
+* can ever arrive: the hook reports `not_embedded` without probing. Any framed
+* page probes, even when the parent origin cannot be resolved (empty referrer,
+* no `ancestorOrigins`): the token comes through the preview proxy, and the
+* bridge event is only the faster signal.
+*/
+function useRefetchWhenConnectorReady(waiting, refetch) {
+	const refetchRef = (0, import_react.useRef)(refetch);
+	const [timedOut, setTimedOut] = (0, import_react.useState)(false);
+	const [notEmbedded, setNotEmbedded] = (0, import_react.useState)(false);
+	(0, import_react.useEffect)(() => {
+		refetchRef.current = refetch;
+	}, [refetch]);
+	(0, import_react.useEffect)(() => {
+		if (!waiting) return;
+		if (!isFramed()) {
+			setNotEmbedded(true);
+			return () => setNotEmbedded(false);
+		}
+		let cancelled = false;
+		let refetching = false;
+		let attempt = 0;
+		let timer;
+		const startedAt = Date.now();
+		const runRefetch = async () => {
+			if (refetching) return;
+			refetching = true;
+			try {
+				await refetchRef.current();
+			} catch {} finally {
+				refetching = false;
+			}
+		};
+		const schedule = () => {
+			timer = setTimeout(probe, readinessProbeDelayMs(attempt));
+			attempt += 1;
+		};
+		const probe = async () => {
+			if (cancelled || readinessProbeExhausted(startedAt, Date.now())) return;
+			const ready = await isConnectorReady();
+			if (cancelled) return;
+			if (ready) await runRefetch();
+			if (!cancelled) schedule();
+		};
+		const onTokenReady = () => {
+			runRefetch();
+		};
+		const deadline = setTimeout(() => {
+			if (!cancelled) setTimedOut(true);
+		}, READINESS_PROBE_MAX_TOTAL_MS);
+		window.addEventListener(CONNECTOR_TOKEN_READY_EVENT, onTokenReady);
+		schedule();
+		return () => {
+			cancelled = true;
+			clearTimeout(deadline);
+			if (timer !== void 0) clearTimeout(timer);
+			window.removeEventListener(CONNECTOR_TOKEN_READY_EVENT, onTokenReady);
+			setTimedOut(false);
+		};
+	}, [waiting]);
+	if (!waiting) return "idle";
+	if (notEmbedded) return "not_embedded";
+	return timedOut ? "timed_out" : "waiting";
+}
+function MailView() {
+	const [provider, setProvider] = (0, import_react.useState)("gmail");
+	const [query, setQuery] = (0, import_react.useState)("newer_than:21d");
+	const [items, setItems] = (0, import_react.useState)([]);
+	const [note, setNote] = (0, import_react.useState)("Koppel Gmail of Outlook in Grok. Daarna haal je de post hier op, op jouw teken.");
+	const [loginUrl, setLoginUrl] = (0, import_react.useState)();
+	const [pending, setPending] = (0, import_react.useState)(false);
+	const [busy, setBusy] = (0, import_react.useState)(false);
+	async function load() {
+		setBusy(true);
+		try {
+			const result = await searchMail({ data: {
+				provider,
+				query
+			} });
+			setPending(Boolean(result.pending));
+			setLoginUrl(result.loginUrl);
+			if (result.ok) {
+				setItems(result.items);
+				setNote(result.items.length ? `${result.items.length} berichten.` : result.rawHint ? "De connector antwoordde, maar zonder leesbare berichten." : "Geen berichten voor die zoekopdracht.");
+			} else {
+				setItems([]);
+				const state = classifyCallToolError({
+					ok: false,
+					data: null,
+					pending: result.pending,
+					loginRequired: result.loginRequired,
+					errorMessage: result.errorMessage,
+					loginUrl: result.loginUrl
+				});
+				setNote(state?.message ?? result.errorMessage ?? "Post ophalen mislukt.");
+			}
+		} catch (error) {
+			setNote(error instanceof Error ? error.message : "Post ophalen mislukt.");
+		} finally {
+			setBusy(false);
+		}
+	}
+	useRefetchWhenConnectorReady(pending, load);
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: "flex flex-col gap-6",
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", { children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Kicker, { children: "Post" }),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
+					className: "mt-2 font-display text-5xl",
+					children: "De inbox, aan de kade."
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "mt-2 max-w-xl text-mist text-pretty",
+					children: "Gmail en Outlook lopen via je Grok-koppeling. Zoek zoals in de mailbox: from:, subject:, newer_than:7d, has:attachment."
+				})
+			] }),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Panel, {
+				className: "flex flex-col gap-3",
+				children: [
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+						className: "flex flex-wrap gap-2",
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+							variant: provider === "gmail" ? "primary" : "ghost",
+							onClick: () => setProvider("gmail"),
+							children: "Gmail"
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+							variant: provider === "outlook" ? "primary" : "ghost",
+							onClick: () => setProvider("outlook"),
+							children: "Outlook"
+						})]
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+						label: "Zoekopdracht",
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+							value: query,
+							onChange: (e) => setQuery(e.target.value)
+						})
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+						className: "flex flex-wrap gap-2",
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+							disabled: busy,
+							onClick: load,
+							children: busy ? "Ophalen…" : "Haal post op"
+						}), loginUrl && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+							variant: "ghost",
+							onClick: () => redirectToLoginIfRequired({
+								ok: false,
+								data: null,
+								loginRequired: true,
+								loginUrl
+							}),
+							children: "Doorgaan met Grok"
+						})]
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						className: "text-sm text-mist",
+						children: note
+					})
+				]
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+				className: "flex flex-col gap-3",
+				children: items.map((item, index) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
+					className: "rounded-md border border-line bg-raised p-4",
+					children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+							className: "text-xs text-mist",
+							children: [
+								item.from,
+								" ",
+								item.date && `· ${item.date}`
+							]
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: "mt-1 font-display text-2xl",
+							children: item.title
+						}),
+						item.snippet && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: "mt-2 text-sm text-mist text-pretty",
+							children: item.snippet
+						})
+					]
+				}, `${item.title}-${index}`))
+			})
+		]
+	});
+}
+var blank = {
+	id: "",
+	name: "",
+	vatNumber: "",
+	email: "",
+	phone: "",
+	contact: "",
+	address: "",
+	postalCode: "",
+	city: "",
+	country: "België",
+	payDays: "30",
+	iban: "",
+	account: "6400",
+	note: "",
+	active: true,
+	peppolId: ""
+};
+function place(party) {
+	const line = [party.postalCode, party.city].filter(Boolean).join(" ");
+	const country = party.country && party.country !== "België" ? party.country : "";
+	return [
+		party.address,
+		line,
+		country
+	].filter(Boolean).join(", ");
+}
+function PartiesView({ kind, desk, go, refresh, notice }) {
+	const list = kind === "client" ? desk.clients : desk.suppliers;
+	const [query, setQuery] = (0, import_react.useState)("");
+	const [selected, setSelected] = (0, import_react.useState)(list[0]?.id ?? "");
+	const [form, setForm] = (0, import_react.useState)(null);
+	const [busy, setBusy] = (0, import_react.useState)("");
+	const [cost, setCost] = (0, import_react.useState)("");
+	const [costDate, setCostDate] = (0, import_react.useState)((/* @__PURE__ */ new Date()).toISOString().slice(0, 10));
+	const [paid, setPaid] = (0, import_react.useState)(true);
+	const party = list.find((item) => item.id === selected) ?? null;
+	const shown = (0, import_react.useMemo)(() => {
+		const q = query.trim().toLowerCase();
+		return list.filter((item) => !q || `${item.name} ${item.city} ${item.vatNumber}`.toLowerCase().includes(q));
+	}, [list, query]);
+	function edit(item) {
+		setSelected(item.id);
+		setForm({
+			id: item.id,
+			name: item.name,
+			vatNumber: item.vatNumber,
+			email: item.email,
+			phone: item.phone,
+			contact: item.contact,
+			address: item.address,
+			postalCode: item.postalCode,
+			city: item.city,
+			country: item.country || "België",
+			payDays: String(item.payDays),
+			iban: item.iban,
+			account: "account" in item ? item.account : "6400",
+			note: item.note,
+			active: item.active,
+			peppolId: item.peppolId
+		});
+	}
+	async function save() {
+		if (!form) return;
+		setBusy("save");
+		try {
+			const payload = {
+				...form,
+				payDays: Number(form.payDays) || 30
+			};
+			const saved = kind === "client" ? await saveClient({ data: payload }) : await saveSupplier({ data: payload });
+			setForm(null);
+			setSelected(saved.id);
+			await refresh();
+			notice("Bestand bijgewerkt.");
+		} catch (error) {
+			notice(error instanceof Error ? error.message : "Bewaren lukte niet.");
+		} finally {
+			setBusy("");
+		}
+	}
+	async function upload(file) {
+		if (!party) return;
+		if (file.size > 7e5) return notice("Houd het bestand onder 700 KB.");
+		setBusy("file");
+		try {
+			const dataUrl = await readFile(file);
+			await saveDocument({ data: {
+				filename: file.name,
+				mime: file.type || "application/pdf",
+				dataUrl,
+				kind: kind === "client" ? "contract" : "aankoopfactuur",
+				vendor: party.name,
+				docDate: (/* @__PURE__ */ new Date()).toISOString().slice(0, 10),
+				amountEur: null,
+				note: "",
+				clientId: kind === "client" ? party.id : "",
+				supplierId: kind === "supplier" ? party.id : ""
+			} });
+			await refresh();
+			notice("Stuk aan het bestand gehangen.");
+		} catch (error) {
+			notice(error instanceof Error ? error.message : "Opladen mislukt.");
+		} finally {
+			setBusy("");
+		}
+	}
+	async function bookCost() {
+		if (!party || kind !== "supplier" || !("account" in party)) return;
+		const amount = Number(cost.replace(",", "."));
+		if (!amount) return notice("Zet een bedrag.");
+		setBusy("cost");
+		try {
+			await postEntry({ data: {
+				kind: "expense",
+				date: costDate,
+				memo: party.name,
+				account: party.account,
+				amountEx: amount,
+				vatRate: desk.company?.vatRegime === "exempt" ? 0 : 21,
+				paid,
+				supplierId: party.id
+			} });
+			setCost("");
+			await refresh();
+			notice(paid ? "Kost geboekt en betaald van de bank." : "Kost geboekt als schuld.");
+		} catch (error) {
+			notice(error instanceof Error ? error.message : "Boeken lukte niet.");
+		} finally {
+			setBusy("");
+		}
+	}
+	const invoices = party && kind === "client" ? desk.invoices.filter((invoice) => invoice.clientId === party.id || invoice.clientName === party.name) : [];
+	const open = invoices.filter((invoice) => invoice.status === "sent");
+	const docs = desk.documents.filter((doc) => kind === "client" ? doc.clientId === party?.id : doc.supplierId === party?.id);
+	const bills = party && kind === "supplier" ? desk.journals.filter((journal) => journal.supplierId === party.id) : [];
+	const projects = party && kind === "client" ? desk.projects.filter((project) => project.clientName.trim().toLowerCase() === party.name.trim().toLowerCase()) : [];
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: "flex flex-col gap-6",
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", {
+			className: "flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between",
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Kicker, { children: ["Finance · ", kind === "client" ? "Klanten" : "Leveranciers"] }),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
+					className: "mt-2 font-display text-5xl",
+					children: kind === "client" ? "Wie je factureert." : "Wie jou factureert."
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "mt-2 max-w-xl text-mist text-pretty",
+					children: kind === "client" ? "Het bestand vult de factuur: naam, btw, adres en betalingstermijn. Wat je verstuurt, blijft aan deze klant hangen." : "Het bestand houdt bij van wie je koopt, op welke rekening, en welke aankoopfactuur erbij hoort."
+				})
+			] }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+				onClick: () => {
+					setForm({ ...blank });
+					setSelected("");
+				},
+				children: "Nieuw"
+			})]
+		}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+			className: "grid items-start gap-4 lg:grid-cols-3",
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "flex flex-col gap-2",
+				children: [
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+						value: query,
+						onChange: (e) => setQuery(e.target.value),
+						placeholder: "Zoek op naam, plaats of btw"
+					}),
+					shown.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						className: "text-sm text-mist",
+						children: "Niemand in dit bestand."
+					}),
+					shown.map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+						type: "button",
+						onClick: () => {
+							setSelected(item.id);
+							setForm(null);
+						},
+						className: `rounded-sm border px-3 py-3 text-left ${selected === item.id ? "border-brass" : "border-line"}`,
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+							className: "block font-medium",
+							children: item.name
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+							className: "block text-sm text-mist",
+							children: [[item.city, item.vatNumber].filter(Boolean).join(" · ") || "Geen btw-nummer", item.active ? "" : " · non-actief"]
+						})]
+					}, item.id))
+				]
+			}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "flex flex-col gap-4 lg:col-span-2",
+				children: [
+					form && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Panel, {
+						className: "grid gap-3 sm:grid-cols-2",
+						children: [
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+								label: "Naam",
+								children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+									value: form.name,
+									onChange: (e) => setForm({
+										...form,
+										name: e.target.value
+									})
+								})
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+								label: "Btw-nummer",
+								children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+									value: form.vatNumber,
+									onChange: (e) => setForm({
+										...form,
+										vatNumber: e.target.value
+									}),
+									placeholder: "BE0123456789"
+								})
+							}),
+							kind === "client" && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+								label: "Peppol-ID",
+								children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+									className: "flex gap-2",
+									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+										value: form.peppolId,
+										onChange: (e) => setForm({
+											...form,
+											peppolId: e.target.value
+										}),
+										placeholder: peppolIdFromKbo(form.vatNumber) || "0208:0123456789"
+									}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+										variant: "ghost",
+										disabled: busy === "peppol",
+										onClick: async () => {
+											const id = form.peppolId.trim() || peppolIdFromKbo(form.vatNumber);
+											setBusy("peppol");
+											try {
+												notice((await lookupPeppol({ data: { peppolId: id } })).message);
+											} finally {
+												setBusy("");
+											}
+										},
+										children: "Peppol-ontvanger?"
+									})]
+								})
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+								label: "Contact",
+								children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+									value: form.contact,
+									onChange: (e) => setForm({
+										...form,
+										contact: e.target.value
+									})
+								})
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+								label: "E-mail",
+								children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+									value: form.email,
+									onChange: (e) => setForm({
+										...form,
+										email: e.target.value
+									})
+								})
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+								label: "Telefoon",
+								children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+									value: form.phone,
+									onChange: (e) => setForm({
+										...form,
+										phone: e.target.value
+									})
+								})
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+								label: "Betalingstermijn, dagen",
+								children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+									inputMode: "numeric",
+									value: form.payDays,
+									onChange: (e) => setForm({
+										...form,
+										payDays: e.target.value
+									})
+								})
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+								className: "sm:col-span-2",
+								children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+									label: "Adres",
+									children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+										value: form.address,
+										onChange: (e) => setForm({
+											...form,
+											address: e.target.value
+										})
+									})
+								})
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+								label: "Postcode",
+								children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+									value: form.postalCode,
+									onChange: (e) => setForm({
+										...form,
+										postalCode: e.target.value
+									})
+								})
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+								label: "Plaats",
+								children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+									value: form.city,
+									onChange: (e) => setForm({
+										...form,
+										city: e.target.value
+									})
+								})
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+								label: "Land",
+								children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+									value: form.country,
+									onChange: (e) => setForm({
+										...form,
+										country: e.target.value
+									})
+								})
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+								label: "IBAN",
+								children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+									value: form.iban,
+									onChange: (e) => setForm({
+										...form,
+										iban: e.target.value
+									})
+								})
+							}),
+							kind === "supplier" && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+								label: "Kostenrekening",
+								children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Select, {
+									value: form.account,
+									onChange: (e) => setForm({
+										...form,
+										account: e.target.value
+									}),
+									children: EXPENSE_ACCOUNTS.map((account) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("option", {
+										value: account.code,
+										children: [
+											account.code,
+											" ",
+											account.name
+										]
+									}, account.code))
+								})
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+								className: "sm:col-span-2",
+								children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+									label: "Nota",
+									children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Area, {
+										value: form.note,
+										onChange: (e) => setForm({
+											...form,
+											note: e.target.value
+										})
+									})
+								})
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+								className: "flex min-h-11 items-center gap-2 text-sm",
+								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+									type: "checkbox",
+									checked: form.active,
+									onChange: (e) => setForm({
+										...form,
+										active: e.target.checked
+									})
+								}), "Actief"]
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+								className: "flex flex-wrap gap-2 sm:col-span-2",
+								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+									disabled: busy === "save",
+									onClick: save,
+									children: busy === "save" ? "Bewaren…" : "Bewaren"
+								}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+									variant: "ghost",
+									onClick: () => setForm(null),
+									children: "Sluiten"
+								})]
+							})
+						]
+					}),
+					!form && party && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Panel, { children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "flex flex-wrap items-start justify-between gap-3",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
+								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+									className: "text-xs tracking-widest text-brass uppercase",
+									children: [
+										party.active ? "Actief" : "Non-actief",
+										" · ",
+										party.payDays,
+										" dagen"
+									]
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+									className: "mt-1 font-display text-4xl",
+									children: party.name
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+									className: "mt-2 text-sm text-mist",
+									children: place(party) || "Geen adres"
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+									className: "text-sm text-mist",
+									children: [
+										party.vatNumber,
+										party.contact,
+										party.email,
+										party.phone
+									].filter(Boolean).join(" · ") || "Geen contact"
+								}),
+								party.iban && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+									className: "mt-1 text-sm tabular-nums",
+									children: party.iban
+								})
+							] }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+								className: "flex flex-wrap gap-2",
+								children: [
+									kind === "client" && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+										onClick: () => {
+											sessionStorage.setItem("kade-client", party.id);
+											go("facturen");
+										},
+										children: "Factuur"
+									}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+										variant: "ghost",
+										onClick: () => edit(party),
+										children: "Wijzig"
+									}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+										variant: "ghost",
+										onClick: async () => {
+											await setPartyActive({ data: {
+												id: party.id,
+												kind: kind === "client" ? "client" : "supplier",
+												active: !party.active
+											} });
+											await refresh();
+										},
+										children: party.active ? "Non-actief" : "Actief"
+									}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+										variant: "ghost",
+										onClick: async () => {
+											try {
+												await deleteParty({ data: {
+													id: party.id,
+													kind: kind === "client" ? "client" : "supplier"
+												} });
+												setSelected("");
+												await refresh();
+											} catch (error) {
+												notice(error instanceof Error ? error.message : "Weghalen lukte niet.");
+											}
+										},
+										children: "Weg"
+									})
+								]
+							})]
+						}),
+						party.note && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: "mt-4 text-sm text-pretty",
+							children: party.note
+						}),
+						kind === "supplier" && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+							className: "mt-3 text-sm text-mist",
+							children: [
+								"Kosten gaan standaard naar ",
+								party.account,
+								"."
+							]
+						})
+					] }),
+					!form && !party && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						className: "text-sm text-mist",
+						children: "Kies iemand, of maak een nieuw bestand."
+					}),
+					party && kind === "client" && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Panel, { children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "flex items-baseline justify-between gap-3",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Kicker, { children: "Facturen" }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+								className: "text-sm text-mist",
+								children: [
+									open.length,
+									" open · ",
+									euroLabel(open.reduce((sum, invoice) => sum + invoiceTotals(invoice.lines, desk.company?.vatRegime === "exempt").incl, 0))
+								]
+							})]
+						}),
+						invoices.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: "mt-3 text-sm text-mist",
+							children: "Nog geen factuur voor deze klant."
+						}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+							className: "mt-3 divide-y divide-line",
+							children: invoices.map((invoice) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
+								className: "flex flex-wrap items-baseline justify-between gap-2 py-3 text-sm",
+								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: [
+									invoice.number,
+									" · ",
+									invoice.status === "paid" ? "betaald" : invoice.status === "sent" ? "open" : "concept"
+								] }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+									className: "tabular-nums text-mist",
+									children: [
+										formatDay(invoice.issueDate),
+										" · ",
+										euroLabel(invoiceTotals(invoice.lines, desk.company?.vatRegime === "exempt").incl)
+									]
+								})]
+							}, invoice.id))
+						}),
+						projects.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+							className: "mt-3 text-sm text-mist",
+							children: [
+								"Projecten: ",
+								projects.map((project) => project.name).join(", "),
+								"."
+							]
+						})
+					] }),
+					party && kind === "supplier" && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Panel, { children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Kicker, { children: "Kosten" }),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "mt-3 grid gap-3 sm:grid-cols-3",
+							children: [
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+									label: "Bedrag excl.",
+									children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+										inputMode: "decimal",
+										value: cost,
+										onChange: (e) => setCost(e.target.value)
+									})
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+									label: "Datum",
+									children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+										type: "date",
+										value: costDate,
+										onChange: (e) => setCostDate(e.target.value)
+									})
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+									className: "flex min-h-11 items-end gap-2 pb-2 text-sm",
+									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+										type: "checkbox",
+										checked: paid,
+										onChange: (e) => setPaid(e.target.checked)
+									}), "Meteen betaald"]
+								})
+							]
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+							className: "mt-3",
+							disabled: busy === "cost",
+							onClick: bookCost,
+							children: busy === "cost" ? "Boekt…" : "Kost boeken"
+						}),
+						bills.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: "mt-4 text-sm text-mist",
+							children: "Nog geen boeking op deze leverancier."
+						}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+							className: "mt-4 divide-y divide-line",
+							children: bills.map((journal) => {
+								const amount = journal.lines.filter((line) => line.account.startsWith("6")).reduce((sum, line) => sum + line.debit, 0);
+								return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
+									className: "flex flex-wrap items-baseline justify-between gap-2 py-3 text-sm",
+									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: journal.memo }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+										className: "tabular-nums text-mist",
+										children: [
+											formatDay(journal.bookedOn),
+											" · ",
+											euroLabel(amount)
+										]
+									})]
+								}, journal.id);
+							})
+						})
+					] }),
+					party && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Panel, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+						className: "flex flex-wrap items-center justify-between gap-3",
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Kicker, { children: "Stukken" }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+							className: "min-h-11 cursor-pointer text-sm text-brass",
+							children: [busy === "file" ? "Laden…" : "Opladen", /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+								type: "file",
+								accept: "image/png,image/jpeg,image/webp,image/gif,application/pdf",
+								className: "sr-only",
+								onChange: (e) => {
+									const file = e.target.files?.[0];
+									if (file) upload(file);
+									e.target.value = "";
+								}
+							})]
+						})]
+					}), docs.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						className: "mt-3 text-sm text-mist",
+						children: "Nog geen contract of factuur aan dit bestand gehangen."
+					}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+						className: "mt-3 divide-y divide-line",
+						children: docs.map((doc) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
+							className: "flex flex-wrap items-baseline justify-between gap-2 py-3 text-sm",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: doc.filename }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+								className: "text-mist",
+								children: [doc.kind, doc.amountEur != null ? ` · ${euroLabel(doc.amountEur)}` : ""]
+							})]
+						}, doc.id))
+					})] })
+				]
+			})]
+		})]
+	});
+}
+function readFile(file) {
+	return new Promise((resolve, reject) => {
+		const reader = new FileReader();
+		reader.onload = () => resolve(String(reader.result ?? ""));
+		reader.onerror = () => reject(/* @__PURE__ */ new Error("Bestand niet leesbaar."));
+		reader.readAsDataURL(file);
+	});
+}
+var STATUSES$1 = [
+	{
+		id: "open",
+		label: "Open"
+	},
+	{
+		id: "bezig",
+		label: "Bezig"
+	},
+	{
+		id: "klaar",
+		label: "Klaar"
+	}
+];
+function TaskList({ tasks, people, projects, today, refresh, notice }) {
+	const [busy, setBusy] = (0, import_react.useState)("");
+	async function run(id, action, ok) {
+		setBusy(id);
+		try {
+			await action();
+			await refresh();
+			if (ok) notice(ok);
+		} catch (error) {
+			notice(error instanceof Error ? error.message : "Dat lukte niet.");
+		} finally {
+			setBusy("");
+		}
+	}
+	if (tasks.length === 0) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+		className: "text-sm text-mist",
+		children: "Niets in deze lijst. Ofwel is het gedaan, ofwel is het nog niet bedacht."
+	});
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+		className: "flex flex-col gap-3",
+		children: tasks.map((task) => {
+			const late = isLate(task, today);
+			return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
+				className: "rounded-md border border-line bg-panel p-4",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+					className: "flex flex-wrap items-start justify-between gap-2",
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+						className: "min-w-0",
+						children: [
+							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+								className: "text-xs tracking-widest text-mist uppercase",
+								children: [
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+										className: task.priority === "hoog" ? "text-brass" : "",
+										children: task.priority
+									}),
+									task.kind === "cip" && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+										className: "ml-2 text-brass",
+										children: "CIP"
+									}),
+									late && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+										className: "ml-2 text-brass",
+										children: "te laat"
+									})
+								]
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+								className: cn("mt-1 text-base font-medium", task.status === "klaar" && "text-mist line-through"),
+								children: task.title
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+								className: "mt-1 text-sm text-mist",
+								children: [
+									personName(people, task.assigneeId),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+										className: "mx-1.5",
+										children: "·"
+									}),
+									projectName(projects, task.projectId),
+									task.dueOn && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+										className: "mx-1.5",
+										children: "·"
+									}), formatDay(task.dueOn)] })
+								]
+							}),
+							task.kind === "cip" && task.cause && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+								className: "mt-2 text-sm text-pretty",
+								children: ["Aanleiding: ", task.cause]
+							}),
+							task.detail && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+								className: "mt-1 text-sm text-mist text-pretty",
+								children: task.detail
+							})
+						]
+					})
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "mt-3 flex flex-wrap items-center gap-2",
+					children: [
+						STATUSES$1.map((status) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+							type: "button",
+							disabled: busy === task.id,
+							onClick: () => run(task.id, () => setTaskStatus({ data: {
+								id: task.id,
+								status: status.id
+							} }), ""),
+							className: cn("min-h-11 rounded-sm border px-3 text-sm", task.status === status.id ? "border-brass bg-brass text-brass-ink" : "border-line text-mist"),
+							children: status.label
+						}, status.id)),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Select, {
+							"aria-label": "Toewijzen",
+							value: task.assigneeId ?? "",
+							disabled: busy === task.id,
+							className: "w-auto min-w-36",
+							onChange: (event) => run(task.id, () => saveTask({ data: {
+								id: task.id,
+								projectId: task.projectId ?? "",
+								assigneeId: event.target.value,
+								title: task.title,
+								detail: task.detail,
+								kind: task.kind,
+								cause: task.cause,
+								priority: task.priority,
+								dueOn: task.dueOn ?? ""
+							} }), "Toegewezen."),
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+								value: "",
+								children: "Niet toegewezen"
+							}), people.filter((person) => person.active || person.id === task.assigneeId).map((person) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+								value: person.id,
+								children: person.name
+							}, person.id))]
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+							variant: "ghost",
+							disabled: busy === task.id,
+							onClick: () => run(task.id, () => deleteTask({ data: { id: task.id } }), "Taak weg."),
+							children: "Weg"
+						})
+					]
+				})]
+			}, task.id);
+		})
+	});
+}
+var STATUSES = [
+	{
+		id: "actief",
+		label: "Actief"
+	},
+	{
+		id: "pauze",
+		label: "Pauze"
+	},
+	{
+		id: "klaar",
+		label: "Klaar"
+	}
+];
+function ProjectsView({ desk, refresh, notice }) {
+	const today = brusselsToday();
+	const [openId, setOpenId] = (0, import_react.useState)(desk.projects[0]?.id ?? "");
+	const [busy, setBusy] = (0, import_react.useState)(false);
+	const [draft, setDraft] = (0, import_react.useState)({
+		name: "",
+		clientName: "",
+		note: "",
+		dueOn: ""
+	});
+	const [task, setTask] = (0, import_react.useState)({
+		title: "",
+		assigneeId: "",
+		priority: "normaal",
+		dueOn: "",
+		kind: "todo"
+	});
+	const selected = desk.projects.find((project) => project.id === openId) ?? null;
+	const projectTasks = selected ? priorityQueue(desk.tasks.filter((item) => item.projectId === selected.id && item.status !== "klaar"), today) : [];
+	const doneTasks = selected ? desk.tasks.filter((item) => item.projectId === selected.id && item.status === "klaar") : [];
+	async function createProject() {
+		setBusy(true);
+		try {
+			const result = await saveProject({ data: {
+				...draft,
+				status: "actief"
+			} });
+			setDraft({
+				name: "",
+				clientName: "",
+				note: "",
+				dueOn: ""
+			});
+			setOpenId(result.id);
+			await refresh();
+			notice("Project staat open.");
+		} catch (error) {
+			notice(error instanceof Error ? error.message : "Opslaan mislukt.");
+		} finally {
+			setBusy(false);
+		}
+	}
+	async function addTask(project) {
+		setBusy(true);
+		try {
+			await saveTask({ data: {
+				title: task.title,
+				detail: "",
+				cause: "",
+				kind: task.kind,
+				priority: task.priority,
+				assigneeId: task.assigneeId,
+				projectId: project.id,
+				dueOn: task.dueOn
+			} });
+			setTask({
+				title: "",
+				assigneeId: "",
+				priority: "normaal",
+				dueOn: "",
+				kind: "todo"
+			});
+			await refresh();
+			notice("Taak hangt aan het project.");
+		} catch (error) {
+			notice(error instanceof Error ? error.message : "Opslaan mislukt.");
+		} finally {
+			setBusy(false);
+		}
+	}
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: "flex flex-col gap-6",
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", { children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Kicker, { children: "Projecten" }),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
+					className: "mt-2 font-display text-5xl",
+					children: "Eén lijst per project."
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "mt-2 max-w-xl text-mist text-pretty",
+					children: "Voortgang is klaar gedeeld door alles wat eraan hangt. Een project zonder taken is een voornemen, geen percentage."
+				})
+			] }),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Panel, {
+				className: "grid gap-3 md:grid-cols-2",
+				children: [
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+						label: "Project",
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+							value: draft.name,
+							onChange: (e) => setDraft({
+								...draft,
+								name: e.target.value
+							}),
+							placeholder: "Naam"
+						})
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+						label: "Voor wie",
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+							value: draft.clientName,
+							onChange: (e) => setDraft({
+								...draft,
+								clientName: e.target.value
+							}),
+							placeholder: "Klant of intern, optioneel"
+						})
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+						label: "Notitie",
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+							value: draft.note,
+							onChange: (e) => setDraft({
+								...draft,
+								note: e.target.value
+							}),
+							placeholder: "Wat af is, is af"
+						})
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+						label: "Streefdatum",
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+							type: "date",
+							value: draft.dueOn,
+							onChange: (e) => setDraft({
+								...draft,
+								dueOn: e.target.value
+							})
+						})
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+						className: "md:col-span-2",
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+							disabled: busy,
+							onClick: createProject,
+							children: "Project openen"
+						})
+					})
+				]
+			}),
+			desk.projects.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "text-sm text-mist",
+				children: "Nog geen projecten. De losse taken blijven op Taken staan."
+			}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+				className: "grid gap-3 sm:grid-cols-2",
+				children: desk.projects.map((project) => {
+					const progress = projectProgress(desk.tasks, project.id);
+					const on = project.id === selected?.id;
+					return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+						type: "button",
+						onClick: () => setOpenId(project.id),
+						className: cn("rounded-md border p-4 text-left", on ? "border-brass bg-raised" : "border-line bg-panel"),
+						children: [
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+								className: "text-xs tracking-widest text-mist uppercase",
+								children: project.status
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+								className: "mt-1 font-display text-3xl",
+								children: project.name
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+								className: "mt-1 text-sm text-mist",
+								children: [project.clientName || "Geen opdrachtgever", project.dueOn ? ` · ${formatDay(project.dueOn)}` : ""]
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+								className: "mt-4 h-1.5 overflow-hidden rounded-sm bg-ink",
+								children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+									className: "h-full bg-brass",
+									style: { width: `${progress.pct}%` }
+								})
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+								className: "mt-2 text-sm tabular-nums text-mist",
+								children: [
+									progress.done,
+									"/",
+									progress.total,
+									" klaar · ",
+									progress.pct,
+									"%"
+								]
+							})
+						]
+					}, project.id);
+				})
+			}),
+			selected && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+				className: "flex flex-col gap-4",
+				children: [
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+						className: "flex flex-wrap items-end justify-between gap-3",
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Kicker, { children: "Todo van dit project" }),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+								className: "mt-2 font-display text-4xl",
+								children: selected.name
+							}),
+							selected.note && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+								className: "mt-1 max-w-xl text-sm text-mist",
+								children: selected.note
+							})
+						] }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+							className: "flex gap-2",
+							children: STATUSES.map((status) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+								type: "button",
+								onClick: () => setProjectStatus({ data: {
+									id: selected.id,
+									status: status.id
+								} }).then(refresh).catch((error) => notice(error instanceof Error ? error.message : "Dat lukte niet.")),
+								className: cn("min-h-11 rounded-sm border px-3 text-sm", selected.status === status.id ? "border-brass bg-brass text-brass-ink" : "border-line text-mist"),
+								children: status.label
+							}, status.id))
+						})]
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Panel, {
+						className: "grid gap-3 md:grid-cols-4",
+						children: [
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+								label: task.kind === "cip" ? "CIP-maatregel" : "Taak",
+								children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+									value: task.title,
+									onChange: (e) => setTask({
+										...task,
+										title: e.target.value
+									}),
+									placeholder: "Wat moet af"
+								})
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+								label: "Soort",
+								children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Select, {
+									value: task.kind,
+									onChange: (e) => setTask({
+										...task,
+										kind: e.target.value
+									}),
+									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+										value: "todo",
+										children: "Todo"
+									}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+										value: "cip",
+										children: "CIP"
+									})]
+								})
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+								label: "Persoon",
+								children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Select, {
+									value: task.assigneeId,
+									onChange: (e) => setTask({
+										...task,
+										assigneeId: e.target.value
+									}),
+									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+										value: "",
+										children: "Niet toegewezen"
+									}), desk.people.filter((item) => item.active).map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+										value: item.id,
+										children: item.name
+									}, item.id))]
+								})
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+								label: "Prio",
+								children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Select, {
+									value: task.priority,
+									onChange: (e) => setTask({
+										...task,
+										priority: e.target.value
+									}),
+									children: [
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+											value: "hoog",
+											children: "Hoog"
+										}),
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+											value: "normaal",
+											children: "Normaal"
+										}),
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+											value: "laag",
+											children: "Laag"
+										})
+									]
+								})
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+								label: "Deadline",
+								children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+									type: "date",
+									value: task.dueOn,
+									onChange: (e) => setTask({
+										...task,
+										dueOn: e.target.value
+									})
+								})
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+								className: "flex items-end",
+								children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+									disabled: busy,
+									onClick: () => addTask(selected),
+									children: "Toevoegen"
+								})
+							})
+						]
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(TaskList, {
+						tasks: projectTasks,
+						people: desk.people,
+						projects: desk.projects,
+						today,
+						refresh,
+						notice
+					}),
+					doneTasks.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+						className: "flex flex-col gap-3",
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Kicker, { children: "Al klaar" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TaskList, {
+							tasks: doneTasks,
+							people: desk.people,
+							projects: desk.projects,
+							today,
+							refresh,
+							notice
+						})]
+					})
+				]
+			})
+		]
+	});
+}
+function ResearchView({ desk, refresh, notice }) {
+	const [question, setQuestion] = (0, import_react.useState)("");
+	const [busy, setBusy] = (0, import_react.useState)(false);
+	const [current, setCurrent] = (0, import_react.useState)(desk.researches[0]?.id ?? "");
+	const selected = desk.researches.find((item) => item.id === current) ?? desk.researches[0];
+	async function ask() {
+		setBusy(true);
+		try {
+			const result = await askResearch({ data: { question } });
+			if (!result.ok) {
+				notice(result.error);
+				return;
+			}
+			setQuestion("");
+			await refresh();
+			setCurrent("");
+		} catch (error) {
+			notice(error instanceof Error ? error.message : "Research mislukt.");
+		} finally {
+			setBusy(false);
+		}
+	}
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: "flex flex-col gap-6",
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", { children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Kicker, { children: "Research" }),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
+					className: "mt-2 font-display text-5xl",
+					children: "Vraag het hardop."
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "mt-2 max-w-xl text-mist",
+					children: "Live via Grok. Hij verzint geen bronnen. Wat hij niet weet, moet hij zeggen."
+				})
+			] }),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Panel, {
+				className: "flex flex-col gap-3",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Area, {
+					value: question,
+					onChange: (e) => setQuestion(e.target.value),
+					placeholder: "Bijvoorbeeld: welke stack is redelijk voor een kleine WMS-koppeling, en wat kost zo’n project in België?"
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+					disabled: busy,
+					onClick: ask,
+					children: busy ? "Zoekt…" : "Onderzoek"
+				})]
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "grid gap-4 lg:grid-cols-3",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("ul", {
+					className: "flex flex-col gap-2",
+					children: [desk.researches.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", {
+						className: "text-sm text-mist",
+						children: "Nog geen onderzoeken."
+					}), desk.researches.map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+						type: "button",
+						onClick: () => setCurrent(item.id),
+						className: "w-full rounded-sm border border-line px-3 py-3 text-left hover:border-brass",
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+							className: "block font-medium",
+							children: item.title
+						})
+					}) }, item.id))]
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("article", {
+					className: "lg:col-span-2",
+					children: selected ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+						className: "font-display text-4xl",
+						children: selected.title
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						className: "mt-4 whitespace-pre-wrap text-pretty",
+						children: selected.answer
+					})] }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						className: "text-mist",
+						children: "Het antwoord landt hier."
+					})
+				})]
+			})
+		]
+	});
+}
+function PeppolSettings({ desk, notice }) {
+	const [config, setConfig] = (0, import_react.useState)(null);
+	const [connected, setConnected] = (0, import_react.useState)(null);
+	const [busy, setBusy] = (0, import_react.useState)(false);
+	const ownId = peppolIdFromKbo(desk.company?.enterpriseNumber || desk.company?.vatNumber || "");
+	(0, import_react.useEffect)(() => {
+		peppolConfig().then(setConfig).catch(() => setConfig({
+			configured: false,
+			provider: "",
+			host: ""
+		}));
+	}, []);
+	async function test() {
+		setBusy(true);
+		try {
+			const res = await testPeppol();
+			setConnected(res.ok);
+			notice(res.message);
+		} finally {
+			setBusy(false);
+		}
+	}
+	const status = connected === true ? "verbonden" : config?.configured ? "ingesteld, nog niet getest" : "niet verbonden";
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+		className: "flex flex-col gap-3",
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+				className: "font-display text-3xl",
+				children: "Peppol"
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "max-w-xl text-sm text-mist text-pretty",
+				children: "Sinds 1 januari 2026 zijn B2B-facturen tussen Belgische btw-plichtigen gestructureerde e-facturen, in de praktijk via Peppol. Kade maakt de UBL (Peppol BIS Billing 3.0) zelf. Verzenden en ontvangen loopt via een erkende Peppol-dienstverlener (access point); daarvoor heb je een eigen account bij zo'n provider nodig."
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Panel, {
+				className: "flex max-w-xl flex-col gap-2 text-sm",
+				children: [
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", { children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+							className: "text-mist",
+							children: "Eigen Peppol-ID"
+						}),
+						" ",
+						ownId || "— vul je ondernemingsnummer in op de zaakfiche"
+					] }),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", { children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+							className: "text-mist",
+							children: "Provider"
+						}),
+						" ",
+						config?.configured ? `${config.provider}${config.host ? ` (${config.host})` : ""}` : "geen"
+					] }),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", { children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+							className: "text-mist",
+							children: "Status"
+						}),
+						" ",
+						config ? status : "…"
+					] }),
+					!config?.configured && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+						className: "text-mist",
+						children: [
+							"Verbinden: zet op de server de geheimen ",
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("code", { children: "PEPPOL_API_URL" }),
+							" en ",
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("code", { children: "PEPPOL_API_KEY" }),
+							" (en eventueel ",
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("code", { children: "PEPPOL_PROVIDER" }),
+							"). De sleutel komt nooit in de browser."
+						]
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+						className: "self-start",
+						variant: "ghost",
+						disabled: busy,
+						onClick: test,
+						children: busy ? "Testen…" : "Test verbinding"
+					})
+				]
+			})
+		]
+	});
+}
+function GrokBotSettings({ notice }) {
+	const [status, setStatus] = (0, import_react.useState)(null);
+	const [url, setUrl] = (0, import_react.useState)("");
+	const [key, setKey] = (0, import_react.useState)("");
+	const [mode, setMode] = (0, import_react.useState)("bearer");
+	const [headerName, setHeaderName] = (0, import_react.useState)("");
+	const [busy, setBusy] = (0, import_react.useState)(false);
+	async function load() {
+		const { status: next } = await loadGrokBot();
+		setStatus(next);
+		setUrl(next.webhookUrl);
+		setMode(next.headerMode);
+		setHeaderName(next.headerName);
+	}
+	(0, import_react.useEffect)(() => {
+		load().catch(() => notice("De Grok Bot-instellingen konden niet laden."));
+	}, []);
+	async function save() {
+		setBusy(true);
+		try {
+			await saveGrokBot({ data: {
+				webhookUrl: url,
+				senderKey: key,
+				headerMode: mode,
+				headerName
+			} });
+			setKey("");
+			await load();
+			notice("Grok Bot-koppeling bewaard.");
+		} catch (error) {
+			notice(error instanceof Error ? error.message : "Bewaren lukte niet.");
+		} finally {
+			setBusy(false);
+		}
+	}
+	async function test() {
+		setBusy(true);
+		try {
+			const res = await sendToGrokBot({ data: {
+				opdracht: "",
+				test: true,
+				context: { view: "instellingen" }
+			} });
+			await load();
+			notice(res.ok ? `Verbinding werkt (HTTP ${res.status}).` : res.detail);
+		} finally {
+			setBusy(false);
+		}
+	}
+	const state = !status?.configured ? "Niet gekoppeld" : status.lastStatus == null ? "Gekoppeld, nog niet getest" : status.lastStatus >= 200 && status.lastStatus < 300 ? `Werkt (HTTP ${status.lastStatus})` : `Fout bij laatste poging (HTTP ${status.lastStatus})`;
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+		className: "flex flex-col gap-3",
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+				className: "font-display text-3xl",
+				children: "Grok Bot"
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "max-w-xl text-sm text-mist text-pretty",
+				children: "Stuur opdrachten vanuit KADE naar je Grok Bot-assistent. Maak in Grok Bot een routine met een webhook-trigger en kopieer de webhook-URL en de sender key uit het routinepaneel. De sleutel blijft op de server en wordt na bewaren niet meer getoond. Het antwoord komt in de Grok Bot-chat, niet hier."
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Panel, {
+				className: "flex max-w-xl flex-col gap-3",
+				children: [
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+						className: "text-sm",
+						children: [
+							"Status: ",
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+								className: "text-brass",
+								children: state
+							}),
+							status?.lastCheckedAt ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+								className: "text-mist",
+								children: [" · ", new Date(status.lastCheckedAt).toLocaleString("nl-BE")]
+							}) : null
+						]
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+						label: "Webhook-URL",
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+							value: url,
+							onChange: (e) => setUrl(e.target.value),
+							placeholder: "https://…",
+							autoComplete: "off"
+						})
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+						label: status?.keyMasked ? `Sender key (bewaard: ${status.keyMasked}, leeg laten om te behouden)` : "Sender key",
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+							type: "password",
+							value: key,
+							onChange: (e) => setKey(e.target.value),
+							autoComplete: "new-password"
+						})
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+						label: "Hoe de sleutel meesturen",
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Select, {
+							value: mode,
+							onChange: (e) => setMode(e.target.value === "custom" ? "custom" : "bearer"),
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+								value: "bearer",
+								children: "Authorization: Bearer <sleutel>"
+							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+								value: "custom",
+								children: "Eigen header"
+							})]
+						})
+					}),
+					mode === "custom" && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+						label: "Headernaam",
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+							value: headerName,
+							onChange: (e) => setHeaderName(e.target.value),
+							placeholder: "X-Sender-Key"
+						})
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+						className: "flex flex-wrap gap-2",
+						children: [
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+								disabled: busy,
+								onClick: save,
+								children: busy ? "Bezig…" : "Bewaren"
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+								variant: "ghost",
+								disabled: busy || !status?.configured,
+								onClick: test,
+								children: "Test verbinding"
+							}),
+							status?.keyMasked && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+								variant: "ghost",
+								disabled: busy,
+								onClick: async () => {
+									await clearGrokKey();
+									await load();
+									notice("Sleutel gewist.");
+								},
+								children: "Sleutel wissen"
+							})
+						]
+					})
+				]
+			})
+		]
+	});
+}
+function SettingsView({ desk, refresh, notice }) {
+	const [brand, setBrand] = (0, import_react.useState)(desk.brand);
+	const [busy, setBusy] = (0, import_react.useState)(false);
+	async function save() {
+		setBusy(true);
+		try {
+			await saveBrand({ data: { brand } });
+			await refresh();
+			notice("Naam staat.");
+		} catch (error) {
+			notice(error instanceof Error ? error.message : "De naam bleef liggen.");
+		} finally {
+			setBusy(false);
+		}
+	}
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: "flex flex-col gap-8",
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", { children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Kicker, { children: "Instellingen" }),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
+					className: "mt-2 font-display text-5xl",
+					children: "Deur en stem."
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+					className: "mt-2 max-w-xl text-mist text-pretty",
+					children: [
+						"De terminal heet nu ",
+						desk.brand,
+						". De hoofdstem heet ",
+						desk.voice.agentName,
+						". Geen van beide verandert de zaakfiche."
+					]
+				})
+			] }),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Panel, {
+				className: "flex max-w-md flex-col gap-3",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+					label: "Naam van de interface",
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+						value: brand,
+						maxLength: 24,
+						onChange: (e) => setBrand(e.target.value),
+						placeholder: "KADE"
+					})
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+					disabled: busy,
+					onClick: save,
+					children: busy ? "Bewaren…" : "Naam bewaren"
+				})]
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+				className: "flex flex-col gap-3",
+				children: [
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+						className: "font-display text-3xl",
+						children: "Hoofdstem"
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						className: "max-w-xl text-sm text-mist text-pretty",
+						children: "Snelheid, toon en volume gelden voor het voorlezen in deze browser. Op een Mac staan de Nederlandse stemmen bij Ellen of Xander, als het systeem ze heeft. Bewaren geldt voor dit account, op elk toestel. Welke stem er klinkt, hangt van die computer af."
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(VoiceForm, {
+						desk,
+						refresh,
+						notice
+					})
+				]
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(PeppolSettings, {
+				desk,
+				notice
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GrokBotSettings, { notice })
+		]
+	});
+}
+var FILTERS = [
+	{
+		id: "open",
+		label: "Open"
+	},
+	{
+		id: "prio",
+		label: "Prio"
+	},
+	{
+		id: "cip",
+		label: "CIP"
+	},
+	{
+		id: "klaar",
+		label: "Klaar"
+	},
+	{
+		id: "alles",
+		label: "Alles"
+	}
+];
+var empty = {
+	title: "",
+	detail: "",
+	cause: "",
+	kind: "todo",
+	priority: "normaal",
+	assigneeId: "",
+	projectId: "",
+	dueOn: ""
+};
+function TasksView({ desk, refresh, notice }) {
+	const today = brusselsToday();
+	const [filter, setFilter] = (0, import_react.useState)("open");
+	const [form, setForm] = (0, import_react.useState)(empty);
+	const [person, setPerson] = (0, import_react.useState)({
+		name: "",
+		role: ""
+	});
+	const [busy, setBusy] = (0, import_react.useState)(false);
+	const tasks = (0, import_react.useMemo)(() => {
+		const ranked = priorityQueue(desk.tasks, today);
+		const done = desk.tasks.filter((task) => task.status === "klaar");
+		if (filter === "prio") return ranked.filter((task) => task.priority === "hoog");
+		if (filter === "cip") return ranked.filter((task) => task.kind === "cip");
+		if (filter === "klaar") return done;
+		if (filter === "alles") return [...ranked, ...done];
+		return ranked;
+	}, [
+		desk.tasks,
+		filter,
+		today
+	]);
+	async function addTask() {
+		setBusy(true);
+		try {
+			await saveTask({ data: form });
+			setForm(empty);
+			await refresh();
+			notice(form.kind === "cip" ? "CIP staat erop." : "Taak staat erop.");
+		} catch (error) {
+			notice(error instanceof Error ? error.message : "Opslaan mislukt.");
+		} finally {
+			setBusy(false);
+		}
+	}
+	async function addPerson() {
+		setBusy(true);
+		try {
+			await savePerson({ data: person });
+			setPerson({
+				name: "",
+				role: ""
+			});
+			await refresh();
+			notice("Persoon staat op de kade.");
+		} catch (error) {
+			notice(error instanceof Error ? error.message : "Opslaan mislukt.");
+		} finally {
+			setBusy(false);
+		}
+	}
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: "flex flex-col gap-6",
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", { children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Kicker, { children: "Taken" }),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
+				className: "mt-2 font-display text-5xl",
+				children: "Wat blijft liggen, blijft van iemand."
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "mt-2 max-w-xl text-mist text-pretty",
+				children: "Todo of CIP. Een CIP is een verbeterpunt: aanleiding, maatregel, eigenaar, deadline. Toegewezen aan iemand op deze kade, niet aan een naam in de kantlijn."
+			})
+		] }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+			className: "grid gap-4 lg:grid-cols-5",
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "flex flex-col gap-4 lg:col-span-2",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Panel, {
+					className: "flex flex-col gap-3",
+					children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Kicker, { children: form.kind === "cip" ? "Nieuw CIP" : "Nieuwe taak" }),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+							className: "flex gap-2",
+							children: ["todo", "cip"].map((kind) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+								type: "button",
+								onClick: () => setForm({
+									...form,
+									kind
+								}),
+								className: cn("min-h-11 flex-1 rounded-sm border text-sm", form.kind === kind ? "border-brass bg-brass text-brass-ink" : "border-line text-mist"),
+								children: kind === "todo" ? "Todo" : "CIP"
+							}, kind))
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+							label: form.kind === "cip" ? "Maatregel" : "Taak",
+							children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+								value: form.title,
+								onChange: (e) => setForm({
+									...form,
+									title: e.target.value
+								}),
+								placeholder: form.kind === "cip" ? "Wat er moet veranderen" : "Wat er moet gebeuren"
+							})
+						}),
+						form.kind === "cip" && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+							label: "Aanleiding",
+							children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Area, {
+								value: form.cause,
+								onChange: (e) => setForm({
+									...form,
+									cause: e.target.value
+								}),
+								placeholder: "Wat liep fout, of wat blijft terugkomen"
+							})
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+							label: "Notitie",
+							children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+								value: form.detail,
+								onChange: (e) => setForm({
+									...form,
+									detail: e.target.value
+								}),
+								placeholder: "Optioneel"
+							})
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "grid gap-3 sm:grid-cols-2",
+							children: [
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+									label: "Prio",
+									children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Select, {
+										value: form.priority,
+										onChange: (e) => setForm({
+											...form,
+											priority: e.target.value
+										}),
+										children: [
+											/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+												value: "hoog",
+												children: "Hoog"
+											}),
+											/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+												value: "normaal",
+												children: "Normaal"
+											}),
+											/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+												value: "laag",
+												children: "Laag"
+											})
+										]
+									})
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+									label: "Deadline",
+									children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+										type: "date",
+										value: form.dueOn,
+										onChange: (e) => setForm({
+											...form,
+											dueOn: e.target.value
+										})
+									})
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+									label: "Persoon",
+									children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Select, {
+										value: form.assigneeId,
+										onChange: (e) => setForm({
+											...form,
+											assigneeId: e.target.value
+										}),
+										children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+											value: "",
+											children: "Niet toegewezen"
+										}), desk.people.filter((item) => item.active).map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+											value: item.id,
+											children: item.name
+										}, item.id))]
+									})
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+									label: "Project",
+									children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Select, {
+										value: form.projectId,
+										onChange: (e) => setForm({
+											...form,
+											projectId: e.target.value
+										}),
+										children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+											value: "",
+											children: "Los van een project"
+										}), desk.projects.map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+											value: item.id,
+											children: item.name
+										}, item.id))]
+									})
+								})
+							]
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+							disabled: busy,
+							onClick: addTask,
+							children: "Zet op de lijst"
+						})
+					]
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Panel, {
+					className: "flex flex-col gap-3",
+					children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Kicker, { children: "Personen" }),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: "text-sm text-mist",
+							children: "Alleen mensen die je hier zet, kunnen een taak krijgen."
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+							label: "Naam",
+							children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+								value: person.name,
+								onChange: (e) => setPerson({
+									...person,
+									name: e.target.value
+								}),
+								placeholder: "Naam"
+							})
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+							label: "Rol",
+							children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+								value: person.role,
+								onChange: (e) => setPerson({
+									...person,
+									role: e.target.value
+								}),
+								placeholder: "Bijvoorbeeld stuurman, dev, boekhouding"
+							})
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+							variant: "ghost",
+							disabled: busy,
+							onClick: addPerson,
+							children: "Persoon toevoegen"
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("ul", {
+							className: "divide-y divide-line",
+							children: [desk.people.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", {
+								className: "py-2 text-sm text-mist",
+								children: "Nog niemand. Jij telt ook, als je jezelf toevoegt."
+							}), desk.people.map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
+								className: "flex items-center justify-between gap-3 py-2",
+								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+									className: cn("block text-sm", !item.active && "text-mist line-through"),
+									children: item.name
+								}), item.role && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+									className: "block text-xs text-mist",
+									children: item.role
+								})] }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+									type: "button",
+									className: "min-h-11 text-sm text-mist hover:text-ivory",
+									onClick: () => setPersonActive({ data: {
+										id: item.id,
+										active: !item.active
+									} }).then(refresh).catch((error) => notice(error instanceof Error ? error.message : "Dat lukte niet.")),
+									children: item.active ? "Zet uit" : "Zet aan"
+								})]
+							}, item.id))]
+						})
+					]
+				})]
+			}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "lg:col-span-3",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+					className: "mb-4 flex gap-2 overflow-x-auto",
+					children: FILTERS.map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+						type: "button",
+						onClick: () => setFilter(item.id),
+						className: cn("min-h-11 shrink-0 rounded-sm px-3 text-sm", filter === item.id ? "bg-brass text-brass-ink" : "border border-line text-mist"),
+						children: item.label
+					}, item.id))
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TaskList, {
+					tasks,
+					people: desk.people,
+					projects: desk.projects,
+					today,
+					refresh,
+					notice
+				})]
+			})]
+		})]
+	});
+}
+var GROUPS = [
+	{
+		id: "brug",
+		label: "Brug",
+		items: [{
+			id: "brug",
+			label: "Brug",
+			icon: Ship
+		}]
+	},
+	{
+		id: "projecten",
+		label: "Projectbeheer",
+		items: [{
+			id: "taken",
+			label: "Taken",
+			icon: ListTodo
+		}, {
+			id: "projecten",
+			label: "Projecten",
+			icon: FolderKanban
+		}]
+	},
+	{
+		id: "finance",
+		label: "Finance",
+		items: [
+			{
+				id: "klanten",
+				label: "Klanten",
+				icon: Users
+			},
+			{
+				id: "leveranciers",
+				label: "Leveranciers",
+				icon: Truck
+			},
+			{
+				id: "facturen",
+				label: "Facturen",
+				icon: FileText
+			},
+			{
+				id: "boeken",
+				label: "Boeken",
+				icon: BookOpen
+			},
+			{
+				id: "balans",
+				label: "Balans",
+				icon: Scale
+			},
+			{
+				id: "inventaris",
+				label: "Inventaris",
+				icon: Boxes
+			},
+			{
+				id: "analyse",
+				label: "Analyse",
+				icon: ChartColumn
+			},
+			{
+				id: "schaar",
+				label: "Schaar",
+				icon: Scissors
+			},
+			{
+				id: "archief",
+				label: "Archief",
+				icon: Archive
+			}
+		]
+	},
+	{
+		id: "agents",
+		label: "Agents",
+		items: [
+			{
+				id: "hoofd",
+				label: "Hoofd",
+				icon: AudioLines
+			},
+			{
+				id: "loots",
+				label: "Loots",
+				icon: Compass
+			},
+			{
+				id: "research",
+				label: "Research",
+				icon: Search
+			},
+			{
+				id: "bots",
+				label: "Bots",
+				icon: Bot
+			},
+			{
+				id: "logboek",
+				label: "Logboek",
+				icon: ScrollText
+			},
+			{
+				id: "post",
+				label: "Post",
+				icon: Mail
+			}
+		]
+	},
+	{
+		id: "beheer",
+		label: "Beheer",
+		items: [{
+			id: "zaak",
+			label: "Zaak",
+			icon: Building2
+		}, {
+			id: "instellingen",
+			label: "Instellingen",
+			icon: Settings
+		}]
+	}
+];
+var NAV = GROUPS.flatMap((group) => group.items.map((item) => ({
+	...item,
+	group: group.label
+})));
+var IDS = new Set(NAV.map((item) => item.id));
+function groupOf(id) {
+	return GROUPS.find((group) => group.items.some((item) => item.id === id))?.id ?? "brug";
+}
+var subscribe = () => () => {};
+function Terminal({ user }) {
+	const [view, setView] = (0, import_react.useState)("brug");
+	const [desk, setDesk] = (0, import_react.useState)(null);
+	const [error, setError] = (0, import_react.useState)("");
+	const [notice, setNotice] = (0, import_react.useState)("");
+	const [palette, setPalette] = (0, import_react.useState)(false);
+	const [query, setQuery] = (0, import_react.useState)("");
+	const [signingOut, setSigningOut] = (0, import_react.useState)(false);
+	const gate = (0, import_react.useSyncExternalStore)(subscribe, hasGateSessionMarker, () => false);
+	async function refresh() {
+		const next = await loadDesk();
+		setDesk(next);
+	}
+	(0, import_react.useEffect)(() => {
+		const hash = window.location.hash.replace("#", "");
+		if (IDS.has(hash)) setView(hash);
+		refresh().catch((err) => setError(err instanceof Error ? err.message : "De terminal kon de boeken niet openen."));
+	}, []);
+	(0, import_react.useEffect)(() => {
+		function onKey(event) {
+			if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+				event.preventDefault();
+				setPalette((open) => !open);
+			}
+			if (event.key === "Escape") setPalette(false);
+		}
+		window.addEventListener("keydown", onKey);
+		return () => window.removeEventListener("keydown", onKey);
+	}, []);
+	function go(id) {
+		setView(id);
+		setPalette(false);
+		history.replaceState(null, "", `#${id}`);
+	}
+	function openGroup(id) {
+		if (groupOf(view) === id) return;
+		const next = GROUPS.find((group) => group.id === id)?.items[0]?.id;
+		if (next) go(next);
+	}
+	(0, import_react.useEffect)(() => {
+		const brand = desk?.brand || "KADE";
+		document.title = `${brand} — zaakterminal`;
+	}, [desk?.brand]);
+	function ping(message) {
+		setNotice(message);
+		window.setTimeout(() => setNotice(""), 4200);
+	}
+	const filtered = NAV.filter((item) => `${item.group} ${item.label}`.toLowerCase().includes(query.toLowerCase()));
+	const demo = user.primaryEmail === "demo@noorderlicht.example";
+	const label = demo ? "Demo" : user.displayName || user.primaryEmail || "Account";
+	const brand = desk?.brand || "KADE";
+	const section = GROUPS.find((group) => group.id === groupOf(view)) ?? GROUPS[0];
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: "min-h-screen bg-ink text-ivory",
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "mx-auto flex min-h-screen max-w-7xl",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("aside", {
+					className: "hidden w-24 shrink-0 flex-col border-r border-line py-4 md:flex",
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						className: "px-3 font-display text-2xl",
+						children: brand.slice(0, 1)
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("nav", {
+						className: "mt-6 flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto",
+						children: section.items.map((item) => {
+							const Icon = item.icon;
+							const on = view === item.id;
+							return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+								type: "button",
+								onClick: () => go(item.id),
+								className: cn("mx-2 flex min-h-14 flex-col items-center justify-center rounded-sm text-xs", on ? "bg-raised text-ivory" : "text-mist hover:text-ivory"),
+								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Icon, { className: "size-4" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+									className: "mt-1",
+									children: item.label
+								})]
+							}, item.id);
+						})
+					})]
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "flex min-w-0 flex-1 flex-col",
+					children: [
+						demo && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: "border-b border-line bg-raised px-4 py-2 text-sm text-mist md:px-6",
+							children: "Demo, zonder account. De cijfers zijn een voorbeeld. Afmelden als je een eigen zaak wilt openen."
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", {
+							className: "flex flex-col gap-3 border-b border-line px-4 py-3 md:px-6",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+								className: "flex items-center justify-between gap-3",
+								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+									className: "min-w-0",
+									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+										className: "truncate font-display text-2xl leading-none",
+										children: brand
+									}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+										className: "text-xs text-mist",
+										children: desk?.company?.name ?? "Zaakterminal"
+									})]
+								}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+									className: "flex flex-wrap items-center justify-end gap-2",
+									children: [
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)(DeckLink, {}),
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+											type: "button",
+											onClick: () => setPalette(true),
+											className: "hidden min-h-11 items-center rounded-sm border border-line px-3 text-sm text-mist sm:inline-flex",
+											children: "Zoek ⌘K"
+										}),
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+											className: "hidden max-w-40 truncate text-sm sm:inline",
+											children: label
+										}),
+										!gate && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+											type: "button",
+											disabled: signingOut,
+											className: "min-h-11 rounded-sm border border-line px-3 text-sm",
+											onClick: () => {
+												setSigningOut(true);
+												signOut("/login").catch(() => setSigningOut(false));
+											},
+											children: "Afmelden"
+										})
+									]
+								})]
+							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("nav", {
+								className: "flex gap-2 overflow-x-auto",
+								children: GROUPS.map((group) => {
+									const on = group.id === section.id;
+									return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+										type: "button",
+										onClick: () => openGroup(group.id),
+										className: cn("min-h-11 shrink-0 rounded-sm px-3 text-sm", on ? "bg-brass text-brass-ink" : "text-mist hover:text-ivory"),
+										children: group.label
+									}, group.id);
+								})
+							})]
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("nav", {
+							className: "flex gap-2 overflow-x-auto border-b border-line px-3 py-2 md:hidden",
+							children: section.items.map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+								type: "button",
+								onClick: () => go(item.id),
+								className: cn("min-h-11 shrink-0 rounded-sm px-3 text-sm", view === item.id ? "bg-raised text-ivory" : "text-mist"),
+								children: item.label
+							}, item.id))
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("main", {
+							className: "flex-1 px-4 py-6 md:px-8 md:py-8",
+							children: [
+								error && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+									className: "mb-4 text-sm text-brass",
+									children: error
+								}),
+								!desk && !error && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+									className: "text-mist",
+									children: "Boeken openen…"
+								}),
+								desk && view === "brug" && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Bridge, {
+									desk,
+									go,
+									refresh,
+									notice: ping
+								}),
+								desk && view === "taken" && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TasksView, {
+									desk,
+									refresh,
+									notice: ping
+								}),
+								desk && view === "projecten" && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ProjectsView, {
+									desk,
+									refresh,
+									notice: ping
+								}),
+								desk && view === "loots" && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(LootsView, {
+									desk,
+									refresh,
+									notice: ping
+								}),
+								desk && view === "hoofd" && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(HoofdView, {
+									desk,
+									refresh,
+									notice: ping
+								}),
+								desk && view === "research" && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ResearchView, {
+									desk,
+									refresh,
+									notice: ping
+								}),
+								desk && view === "bots" && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(BotsView, {
+									desk,
+									refresh,
+									notice: ping
+								}),
+								desk && view === "logboek" && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(LogboekView, { desk }),
+								desk && view === "schaar" && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(FiscalView, {
+									desk,
+									refresh,
+									notice: ping
+								}),
+								desk && view === "facturen" && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(InvoicesView, {
+									desk,
+									refresh,
+									notice: ping
+								}),
+								desk && view === "klanten" && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(PartiesView, {
+									kind: "client",
+									desk,
+									go,
+									refresh,
+									notice: ping
+								}),
+								desk && view === "leveranciers" && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(PartiesView, {
+									kind: "supplier",
+									desk,
+									go,
+									refresh,
+									notice: ping
+								}),
+								desk && view === "boeken" && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(BooksView, {
+									desk,
+									refresh,
+									notice: ping
+								}),
+								desk && view === "balans" && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(BalanceView, { desk }),
+								desk && view === "inventaris" && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(InventarisView, {
+									desk,
+									refresh,
+									notice: ping
+								}),
+								desk && view === "analyse" && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(AnalysisView, { desk }),
+								desk && view === "archief" && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ArchiveView, {
+									desk,
+									refresh,
+									notice: ping
+								}),
+								desk && view === "post" && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(MailView, {}),
+								desk && view === "zaak" && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(CompanyView, {
+									desk,
+									refresh,
+									notice: ping
+								}),
+								desk && view === "instellingen" && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SettingsView, {
+									desk,
+									refresh,
+									notice: ping
+								})
+							]
+						})
+					]
+				})]
+			}),
+			notice && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "fixed right-4 bottom-4 z-40 max-w-sm rounded-sm border border-line bg-raised px-4 py-3 text-sm",
+				children: notice
+			}),
+			palette && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+				className: "fixed inset-0 z-40 grid place-items-start bg-ink/70 px-4 pt-24",
+				onClick: () => setPalette(false),
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "w-full max-w-lg rounded-md border border-line bg-panel p-3",
+					onClick: (e) => e.stopPropagation(),
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+						autoFocus: true,
+						value: query,
+						onChange: (e) => setQuery(e.target.value),
+						placeholder: "Naar…",
+						className: "min-h-11 w-full bg-transparent px-2 text-ivory outline-none"
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+						className: "mt-2",
+						children: filtered.map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+							type: "button",
+							className: "min-h-11 w-full rounded-sm px-2 text-left hover:bg-raised",
+							onClick: () => go(item.id),
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+								className: "text-xs tracking-widest text-mist uppercase",
+								children: item.group
+							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+								className: "ml-2",
+								children: item.label
+							})]
+						}) }, item.id))
+					})]
+				})
+			})
+		]
+	});
+}
+function Home() {
+	const [ready, setReady] = (0, import_react.useState)(false);
+	(0, import_react.useEffect)(() => setReady(true), []);
+	if (!ready) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(BootScreen, {});
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Gate, {});
+}
+function Gate() {
+	const { user, isPending } = useCurrentUserState();
+	if (isPending) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(BootScreen, {});
+	if (!user) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(RedirectToSignIn, {});
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Terminal, { user });
+}
+export { Home as component, redirectToLoginIfRequired as n, isLoginRequired as t };

@@ -1,0 +1,152 @@
+import { r as createServerFn } from "./ssr.mjs";
+import { r as authMiddleware } from "./day-BxYy7QRe.mjs";
+import { M as str, N as uid, u as db } from "./ops-shared-D7VxsQv_.mjs";
+import { a as validWebhookUrl, n as buildGrokPayload, r as maskKey, t as authHeader } from "./grokbot-DKOQZr6S.mjs";
+import { t as createServerRpc } from "./createServerRpc-CcwiDFzT.mjs";
+// node_modules/.nitro/vite/services/ssr/assets/ops-grokbot-D-NmtVe4.js
+async function readRow(sql, userId) {
+	return (await sql`select * from grokbot_settings where user_id = ${userId}`)[0];
+}
+function iso(v) {
+	if (!v) return null;
+	return v instanceof Date ? v.toISOString() : String(v);
+}
+/** Status voor de client: de sleutel zelf verlaat de server nooit. */
+var loadGrokBot_createServerFn_handler = createServerRpc({
+	id: "d0f16687a8231f46b908e7918e5cf468bb33bf55f40f2ebfdd9341f4d8860bf4",
+	name: "loadGrokBot",
+	filename: "src/lib/ops-grokbot.ts"
+}, (opts) => loadGrokBot.__executeServer(opts));
+var loadGrokBot = createServerFn({ method: "GET" }).middleware([authMiddleware]).handler(loadGrokBot_createServerFn_handler, async ({ context }) => {
+	const sql = await db();
+	const row = await readRow(sql, context.userId);
+	const logs = await sql`
+      select id, opdracht, view, status, ok, detail, created_at from grokbot_log
+      where user_id = ${context.userId} order by created_at desc limit 100`;
+	return {
+		status: {
+			configured: Boolean(row && str(row.webhook_url, 2e3) && str(row.sender_key, 2e3)),
+			webhookUrl: str(row?.webhook_url, 2e3),
+			keyMasked: maskKey(str(row?.sender_key, 2e3)),
+			headerMode: row?.header_mode === "custom" ? "custom" : "bearer",
+			headerName: str(row?.header_name, 64),
+			lastStatus: row?.last_status == null ? null : Number(row.last_status),
+			lastCheckedAt: iso(row?.last_checked_at)
+		},
+		log: logs.map((l) => ({
+			id: str(l.id, 80),
+			opdracht: str(l.opdracht, 4e3),
+			view: str(l.view, 60),
+			status: l.status == null ? null : Number(l.status),
+			ok: Boolean(l.ok),
+			detail: str(l.detail, 500),
+			createdAt: iso(l.created_at) ?? ""
+		}))
+	};
+});
+var saveGrokBot_createServerFn_handler = createServerRpc({
+	id: "9624fddd33e312fbe878ebe6369f7bc7b9d9a13c7363a875edf208c1e773ec26",
+	name: "saveGrokBot",
+	filename: "src/lib/ops-grokbot.ts"
+}, (opts) => saveGrokBot.__executeServer(opts));
+var saveGrokBot = createServerFn({ method: "POST" }).middleware([authMiddleware]).validator((input) => {
+	const row = input ?? {};
+	const webhookUrl = str(row.webhookUrl, 2e3).trim();
+	if (webhookUrl && !validWebhookUrl(webhookUrl)) throw new Error("De webhook-URL moet met https:// beginnen.");
+	const headerMode = row.headerMode === "custom" ? "custom" : "bearer";
+	const headerName = str(row.headerName, 64).trim();
+	if (headerMode === "custom") authHeader("custom", headerName, "x");
+	return {
+		webhookUrl,
+		senderKey: str(row.senderKey, 2e3).trim(),
+		headerMode,
+		headerName
+	};
+}).handler(saveGrokBot_createServerFn_handler, async ({ context, data }) => {
+	await (await db())`
+      insert into grokbot_settings (user_id, webhook_url, sender_key, header_mode, header_name)
+      values (${context.userId}, ${data.webhookUrl}, ${data.senderKey}, ${data.headerMode}, ${data.headerName})
+      on conflict (user_id) do update set
+        webhook_url = excluded.webhook_url,
+        sender_key = case when excluded.sender_key = '' then grokbot_settings.sender_key else excluded.sender_key end,
+        header_mode = excluded.header_mode, header_name = excluded.header_name, updated_at = now()`;
+	return { ok: true };
+});
+var clearGrokKey_createServerFn_handler = createServerRpc({
+	id: "e2f23254d7630e573acce523f62d34d04cc04f424f2a3d2e89b8f7da0817f095",
+	name: "clearGrokKey",
+	filename: "src/lib/ops-grokbot.ts"
+}, (opts) => clearGrokKey.__executeServer(opts));
+var clearGrokKey = createServerFn({ method: "POST" }).middleware([authMiddleware]).handler(clearGrokKey_createServerFn_handler, async ({ context }) => {
+	await (await db())`update grokbot_settings set sender_key = '', last_status = null where user_id = ${context.userId}`;
+	return { ok: true };
+});
+var sendToGrokBot_createServerFn_handler = createServerRpc({
+	id: "4548fc64f900ae9030e6a90e0be78716217f340beb26c9ec7c3202926413fc04",
+	name: "sendToGrokBot",
+	filename: "src/lib/ops-grokbot.ts"
+}, (opts) => sendToGrokBot.__executeServer(opts));
+var sendToGrokBot = createServerFn({ method: "POST" }).middleware([authMiddleware]).validator((input) => {
+	const row = input ?? {};
+	const ctx = row.context ?? {};
+	return {
+		opdracht: str(row.opdracht, 4e3),
+		test: Boolean(row.test),
+		context: {
+			view: str(ctx.view, 60),
+			ids: Array.isArray(ctx.ids) ? ctx.ids.map((v) => str(v, 80)) : [],
+			samenvatting: str(ctx.samenvatting, 2e3)
+		}
+	};
+}).handler(sendToGrokBot_createServerFn_handler, async ({ context, data }) => {
+	const sql = await db();
+	const row = await readRow(sql, context.userId);
+	const url = str(row?.webhook_url, 2e3);
+	const key = str(row?.sender_key, 2e3);
+	if (!url || !key) return {
+		ok: false,
+		status: null,
+		detail: "Grok Bot is nog niet gekoppeld. Vul de webhook en sleutel in bij Beheer > Instellingen."
+	};
+	const opdracht = data.test ? "Testbericht vanuit KADE: de koppeling werkt. Je hoeft niets te doen." : data.opdracht;
+	let payload;
+	try {
+		payload = buildGrokPayload(opdracht, data.context);
+	} catch (error) {
+		return {
+			ok: false,
+			status: null,
+			detail: error instanceof Error ? error.message : "Ongeldige opdracht."
+		};
+	}
+	let status = null;
+	let detail = "";
+	try {
+		const [name, value] = authHeader(row?.header_mode === "custom" ? "custom" : "bearer", str(row?.header_name, 64), key);
+		const res = await fetch(url, {
+			method: "POST",
+			headers: {
+				"content-type": "application/json",
+				[name]: value
+			},
+			body: JSON.stringify(payload),
+			signal: AbortSignal.timeout(15e3)
+		});
+		status = res.status;
+		const body = (await res.text().catch(() => "")).slice(0, 300);
+		detail = res.ok ? "Aangekomen. Het antwoord verschijnt in de Grok Bot-chat." : `HTTP ${res.status}${body ? `: ${body}` : ""}`;
+	} catch (error) {
+		detail = `Niet bereikt: ${error instanceof Error ? error.message : String(error)}`.slice(0, 300);
+	}
+	const ok = status !== null && status >= 200 && status < 300;
+	await sql`update grokbot_settings set last_status = ${status}, last_checked_at = now() where user_id = ${context.userId}`;
+	await sql`
+      insert into grokbot_log (id, user_id, opdracht, view, status, ok, detail)
+      values (${uid()}, ${context.userId}, ${payload.opdracht}, ${data.test ? "test" : payload.context.view}, ${status}, ${ok}, ${detail})`;
+	return {
+		ok,
+		status,
+		detail
+	};
+});
+export { clearGrokKey_createServerFn_handler, loadGrokBot_createServerFn_handler, saveGrokBot_createServerFn_handler, sendToGrokBot_createServerFn_handler };

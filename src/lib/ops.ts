@@ -1,5 +1,6 @@
 export { loadDesk, saveCompany } from "@/lib/ops-desk";
 export { saveClient, saveSupplier, setPartyActive, deleteParty } from "@/lib/ops-parties";
+export { peppolConfig, testPeppol, lookupPeppol, getInvoiceUbl, sendInvoicePeppol } from "@/lib/ops-peppol";
 export { saveInvoice, setInvoicePaid, deleteDraftInvoice } from "@/lib/ops-invoices";
 export { postEntry, deleteJournal } from "@/lib/ops-books";
 export { saveDocument, getDocument, deleteDocument, seedDemo, clearDemo } from "@/lib/ops-docs";

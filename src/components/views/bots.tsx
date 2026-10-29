@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { deleteBot, runBot, saveBot } from "@/lib/ops";
 import type { Bot, Desk } from "@/lib/types";
+import { GrokCommand } from "@/components/grokbot/command";
 import { Button, Field, Kicker, Panel, TextInput, Area } from "@/components/ui";
 
 export function BotsView({ desk, refresh, notice }: { desk: Desk; refresh: () => Promise<void>; notice: (m: string) => void }) {
@@ -53,6 +54,7 @@ export function BotsView({ desk, refresh, notice }: { desk: Desk; refresh: () =>
         <h1 className="mt-2 font-display text-5xl">Bemanning.</h1>
         <p className="mt-2 max-w-xl text-mist text-pretty">Volg wie je nodig hebt. Geef een opdracht. Ze werken via Grok, met je cijfers erbij, en ze doen niets uit zichzelf.</p>
       </header>
+      <GrokCommand view="bots" summary={`Gevolgde bots: ${followed.map((b) => b.name).join(", ") || "geen"}`} notice={notice} />
       <section>
         <h2 className="font-display text-3xl">Op de kade</h2>
         <div className="mt-4 grid gap-4 lg:grid-cols-2">

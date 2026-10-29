@@ -3,6 +3,8 @@ import { EXPENSE_ACCOUNTS } from "@/lib/accounts";
 import { formatDay } from "@/lib/day";
 import { invoiceTotals } from "@/lib/finance";
 import { euroLabel } from "@/lib/money";
+import { lookupPeppol } from "@/lib/ops";
+import { peppolIdFromKbo } from "@/lib/peppol";
 import { deleteParty, postEntry, saveClient, saveDocument, saveSupplier, setPartyActive } from "@/lib/ops";
 import type { Client, Desk, Supplier } from "@/lib/types";
 import { Button, Field, Kicker, Panel, Select, TextInput, Area } from "@/components/ui";
@@ -25,6 +27,7 @@ const blank = {
   account: "6400",
   note: "",
   active: true,
+  peppolId: "",
 };
 
 function place(party: Client): string {
@@ -78,6 +81,7 @@ export function PartiesView({
       account: "account" in item ? item.account : "6400",
       note: item.note,
       active: item.active,
+      peppolId: item.peppolId,
     });
   }
 
@@ -206,6 +210,18 @@ export function PartiesView({
             <Panel className="grid gap-3 sm:grid-cols-2">
               <Field label="Naam"><TextInput value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></Field>
               <Field label="Btw-nummer"><TextInput value={form.vatNumber} onChange={(e) => setForm({ ...form, vatNumber: e.target.value })} placeholder="BE0123456789" /></Field>
+              {kind === "client" && (
+                <Field label="Peppol-ID">
+                  <div className="flex gap-2">
+                    <TextInput value={form.peppolId} onChange={(e) => setForm({ ...form, peppolId: e.target.value })} placeholder={peppolIdFromKbo(form.vatNumber) || "0208:0123456789"} />
+                    <Button variant="ghost" disabled={busy === "peppol"} onClick={async () => {
+                      const id = form.peppolId.trim() || peppolIdFromKbo(form.vatNumber);
+                      setBusy("peppol");
+                      try { notice((await lookupPeppol({ data: { peppolId: id } })).message); } finally { setBusy(""); }
+                    }}>Peppol-ontvanger?</Button>
+                  </div>
+                </Field>
+              )}
               <Field label="Contact"><TextInput value={form.contact} onChange={(e) => setForm({ ...form, contact: e.target.value })} /></Field>
               <Field label="E-mail"><TextInput value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></Field>
               <Field label="Telefoon"><TextInput value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></Field>

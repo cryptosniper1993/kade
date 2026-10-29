@@ -84,6 +84,7 @@ export function mapParty(row: Record<string, unknown>): Client {
     note: str(row.note, 800),
     active: row.active == null ? true : Boolean(row.active),
     demo: Boolean(row.demo),
+    peppolId: str(row.peppol_id, 60),
   };
 }
 
@@ -237,6 +238,8 @@ export async function contextPack(sql: Sql, userId: string): Promise<{ company: 
     notes: "",
     lines: [],
     demo: false,
+    peppolStatus: "concept" as const,
+    peppolMessage: "",
   }));
   const snapshot = buildSnapshot(journals, company);
   const day = brusselsToday();

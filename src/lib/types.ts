@@ -33,6 +33,8 @@ export type Party = {
   note: string;
   active: boolean;
   demo: boolean;
+  /** Peppol-ID, bv. 0208:0123456789. Leeg = afgeleid van het btw-nummer. */
+  peppolId: string;
 };
 
 export type Client = Party;
@@ -59,7 +61,11 @@ export type Invoice = {
   notes: string;
   lines: InvoiceLine[];
   demo: boolean;
+  peppolStatus: PeppolStatus;
+  peppolMessage: string;
 };
+
+export type PeppolStatus = "concept" | "verzonden" | "fout";
 
 export type JournalLine = {
   id: string;

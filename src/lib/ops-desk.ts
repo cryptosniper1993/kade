@@ -61,7 +61,7 @@ export const loadDesk = createServerFn({ method: "GET" })
     const companies = await sql<Record<string, unknown>>`select * from companies where user_id = ${userId}`;
     const clients = await sql<Record<string, unknown>>`
       select id, name, vat_number, email, phone, contact, address, postal_code, city, country,
-             pay_days, iban, note, active, demo
+             pay_days, iban, note, active, demo, peppol_id
       from clients where user_id = ${userId} order by name asc`;
     const suppliers = await sql<Record<string, unknown>>`
       select id, name, vat_number, email, phone, contact, address, postal_code, city, country,
@@ -69,7 +69,7 @@ export const loadDesk = createServerFn({ method: "GET" })
       from suppliers where user_id = ${userId} order by name asc`;
     const invoices = await sql<Record<string, unknown>>`
       select id, number, client_id, client_name, client_vat, client_address,
-             issue_date::text as issue_date, due_date::text as due_date, status, notes, lines, demo
+             issue_date::text as issue_date, due_date::text as due_date, status, notes, lines, demo, peppol_status, peppol_message
       from invoices where user_id = ${userId} order by issue_date desc, number desc`;
     const documents = await sql<Record<string, unknown>>`
       select id, filename, mime, kind, vendor, doc_date::text as doc_date, amount_eur, note, demo,
@@ -113,6 +113,8 @@ export const loadDesk = createServerFn({ method: "GET" })
         notes: str(row.notes, 800),
         lines: asLines(row.lines),
         demo: Boolean(row.demo),
+        peppolStatus: (["verzonden", "fout"].includes(str(row.peppol_status, 12)) ? str(row.peppol_status, 12) : "concept") as Invoice["peppolStatus"],
+        peppolMessage: str(row.peppol_message, 400),
       })),
       journals,
       documents: documents.map((row) => ({

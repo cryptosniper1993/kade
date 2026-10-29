@@ -2,8 +2,9 @@ import { useState } from "react";
 import type { Desk } from "@/lib/types";
 import { cn } from "@/lib/cn";
 import { Kicker } from "@/components/ui";
+import { GrokLog } from "@/components/grokbot/log";
 
-type Kind = "research" | "bots" | "agents";
+type Kind = "research" | "bots" | "agents" | "grok";
 
 function when(value: string): string {
   const day = value.slice(0, 10);
@@ -25,7 +26,7 @@ export function LogboekView({ desk }: { desk: Desk }) {
     ...desk.hoofd.map((item) => ({ ...item, who: desk.voice.agentName || "Jarvis" })),
   ].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
 
-  const empty = kind === "research" ? research.length === 0 : kind === "bots" ? runs.length === 0 : agents.length === 0;
+  const empty = kind === "grok" ? false : kind === "research" ? research.length === 0 : kind === "bots" ? runs.length === 0 : agents.length === 0;
   const selectedResearch = research.find((item) => item.id === current) ?? research[0];
   const selectedRun = runs.find((item) => item.id === current) ?? runs[0];
 
@@ -41,6 +42,7 @@ export function LogboekView({ desk }: { desk: Desk }) {
           ["research", "Research"],
           ["bots", "Bots"],
           ["agents", "Agents"],
+          ["grok", "Grok Bot"],
         ] as const).map(([id, label]) => (
           <button
             key={id}
@@ -53,6 +55,7 @@ export function LogboekView({ desk }: { desk: Desk }) {
         ))}
       </div>
       {empty && <p className="text-sm text-mist">Nog niets in dit vak. Een gesprek landt hier vanzelf.</p>}
+      {kind === "grok" && <GrokLog />}
       {kind === "research" && research.length > 0 && (
         <div className="grid gap-4 lg:grid-cols-3">
           <ul className="flex flex-col gap-2">

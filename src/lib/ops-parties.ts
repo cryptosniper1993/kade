@@ -45,17 +45,17 @@ export const saveClient = createServerFn({ method: "POST" })
         update clients set name = ${data.name}, vat_number = ${data.vatNumber}, email = ${data.email},
           phone = ${data.phone}, contact = ${data.contact}, address = ${data.address}, postal_code = ${data.postalCode},
           city = ${data.city}, country = ${data.country}, pay_days = ${data.payDays}, iban = ${data.iban}, note = ${data.note},
-          active = ${data.active}
+          active = ${data.active}, peppol_id = ${data.peppolId}
         where id = ${id} and user_id = ${context.userId}`;
     } else {
       await sql`
         insert into clients (
           id, user_id, name, vat_number, email, phone, contact, address, postal_code, city, country,
-          pay_days, iban, note, active, demo
+          pay_days, iban, note, active, demo, peppol_id
         ) values (
           ${id}, ${context.userId}, ${data.name}, ${data.vatNumber}, ${data.email}, ${data.phone}, ${data.contact},
           ${data.address}, ${data.postalCode}, ${data.city}, ${data.country}, ${data.payDays}, ${data.iban},
-          ${data.note}, ${data.active}, false
+          ${data.note}, ${data.active}, false, ${data.peppolId}
         )`;
     }
     return { id };
@@ -160,6 +160,7 @@ function partyInput(input: unknown, who: string) {
     iban: str(row.iban, 40).replace(/\s+/g, "").toUpperCase(),
     note: str(row.note, 800),
     active: row.active == null ? true : Boolean(row.active),
+    peppolId: str(row.peppolId, 60).replace(/\s+/g, ""),
   };
 }
 

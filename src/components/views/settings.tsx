@@ -2,6 +2,8 @@ import { useState } from "react";
 import { saveBrand } from "@/lib/ops";
 import type { Desk } from "@/lib/types";
 import { VoiceForm } from "@/components/voice-form";
+import { PeppolSettings } from "@/components/views/peppol-settings";
+import { GrokBotSettings } from "@/components/grokbot/settings";
 import { Button, Field, Kicker, Panel, TextInput } from "@/components/ui";
 
 export function SettingsView({ desk, refresh, notice }: { desk: Desk; refresh: () => Promise<void>; notice: (m: string) => void }) {
@@ -43,6 +45,8 @@ export function SettingsView({ desk, refresh, notice }: { desk: Desk; refresh: (
         </p>
         <VoiceForm desk={desk} refresh={refresh} notice={notice} />
       </section>
+      <PeppolSettings desk={desk} notice={notice} />
+      <GrokBotSettings notice={notice} />
     </div>
   );
 }
