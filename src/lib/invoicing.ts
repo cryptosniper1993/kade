@@ -62,7 +62,7 @@ export function asTreatment(v: unknown): VatTreatment {
 
 /** Belgisch btw-nummer: BE + 10 cijfers (begint met 0 of 1) en mod-97-controle. */
 export function isValidBeVat(input: string): boolean {
-  const s = String(input ?? "").replace(/[\s.\-]/g, "").toUpperCase();
+  const s = String(input ?? "").replace(/[\s.-]/g, "").toUpperCase();
   const m = /^(?:BE)?([01]\d{9})$/.exec(s);
   if (!m) return false;
   const d = m[1];
@@ -71,18 +71,18 @@ export function isValidBeVat(input: string): boolean {
 
 /** Btw-nummer is Belgisch als het met BE begint of 10 cijfers is. */
 export function isBelgianVat(input: string): boolean {
-  const s = String(input ?? "").replace(/[\s.\-]/g, "").toUpperCase();
+  const s = String(input ?? "").replace(/[\s.-]/g, "").toUpperCase();
   return s.startsWith("BE") || /^[01]\d{9}$/.test(s);
 }
 
 /** Buitenlands EU-btw-nummer: landcode + 2..13 tekens (geen VIES-controle). */
 export function isForeignVat(input: string): boolean {
-  const s = String(input ?? "").replace(/[\s.\-]/g, "").toUpperCase();
+  const s = String(input ?? "").replace(/[\s.-]/g, "").toUpperCase();
   return /^(AT|BG|CY|CZ|DE|DK|EE|EL|ES|FI|FR|HR|HU|IE|IT|LT|LU|LV|MT|NL|PL|PT|RO|SE|SI|SK|XI)[A-Z0-9]{2,13}$/.test(s);
 }
 
 export function normalizeVat(input: string): string {
-  const s = String(input ?? "").replace(/[\s.\-]/g, "").toUpperCase();
+  const s = String(input ?? "").replace(/[\s.-]/g, "").toUpperCase();
   return /^[01]\d{9}$/.test(s) ? `BE${s}` : s;
 }
 
