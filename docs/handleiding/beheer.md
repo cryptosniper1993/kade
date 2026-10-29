@@ -8,14 +8,14 @@ Schermen: **Zaak** en **Instellingen**.
 
 ### Stap voor stap
 
-1. Vul alle velden in en druk **Fiche bewaren** ("Zaakfiche bewaard.").
+1. Vul alle velden in en druk **Fiche bewaren** ("Zaakfiche bewaard."). Zonder rechtsvorm wordt de fiche niet bewaard.
 2. Voor een btw-nummer in bijberoep: **Rechtsvorm** *Eenmanszaak* en **Sociaal statuut** *Zelfstandige in bijberoep*; **Btw-regime** volgens je aangifte.
 3. **Demokade**: **Demoboekjaar laden** vult voorbeeldgegevens; **Demo wissen** haalt ze weer weg.
 
 | Veld | Opties |
 | --- | --- |
 | Naam | |
-| Rechtsvorm | **Eenmanszaak**, **BV**, **VOF**, **CommV** |
+| Rechtsvorm | **Eenmanszaak**, **BV**, **VOF**, **CommV**; verplicht (er is geen standaardwaarde, eerst staat "Kies je rechtsvorm…") |
 | Btw-nummer | bv. `BE0123.456.789` |
 | Ondernemingsnummer | bepaalt je Peppol-ID `0208:…` |
 | Adres | |
@@ -23,6 +23,7 @@ Schermen: **Zaak** en **Instellingen**.
 | E-mail | |
 | IBAN | komt op facturen en in de UBL |
 | Btw-regime | **Btw-plichtig, kwartaalaangifte**, **Btw-plichtig, maandaangifte**, **Vrijstellingsregeling kleine ondernemingen (art. 56bis)** |
+| Eigen omzetdrempel | alleen bij vrijstellingsregeling; leeg = wettelijke drempel van het jaar (€ 25.000 in 2025–2026, € 26.000 vanaf 2027). Overschrijd je de drempel met hoogstens 10%, dan verlies je de vrijstelling pas vanaf volgend jaar; Kade waarschuwt bij nadering, tolerantie en overschrijding. |
 | Sociaal statuut | **Zelfstandige in hoofdberoep**, **Zelfstandige in bijberoep** |
 | Afsluitmaand | einde boekjaar |
 
@@ -66,3 +67,16 @@ Koppeling waarmee Kade opdrachten naar Grok Bot stuurt (via een webhook-routine 
 | **Sleutel wissen** | verwijdert de sleutel |
 
 Daarna kan je opdrachten sturen vanuit Agents → Bots en het resultaat zien in Agents → Logboek → Grok Bot.
+
+## Aanmelden in productie
+
+Een productie-installatie (`NODE_ENV=production` met `GROK_PROJECT_ID` of `DATABASE_URL`) start niet als het aanmelden onveilig staat:
+
+| Variabele | Vereiste |
+| --- | --- |
+| `VITE_AUTH_ENABLED` | niet `false` |
+| `GROK_AUTH_CLIENT_ID`, `GROK_AUTH_CLIENT_SECRET` | ingevuld (anders zou de gedeelde preview-client gebruikt worden) |
+| `BETTER_AUTH_SECRET` | ingevuld |
+| `KADE_ALLOW_INSECURE_AUTH` | alleen `true` zetten als je bewust een afgeschermde demo zonder aanmelden draait; dan wordt de controle overgeslagen |
+
+Lokaal (`npm run dev`) geldt deze controle niet.

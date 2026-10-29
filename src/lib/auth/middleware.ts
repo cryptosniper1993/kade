@@ -38,6 +38,8 @@ export const authMiddleware = createMiddleware({ type: "function" })
     // (bearer hook on the client). A plain `./isolation` path was renamed to
     // `isolation.server.ts` — keep this import in sync so image `tsc` resolves
     // it, and so Vite does not ship `@tanstack/react-start/server` to the browser.
+    const { assertProductionAuth } = await import("./prod-guard.server");
+    assertProductionAuth();
     const { assertSameSiteRequest } = await import("./isolation.server");
     const { requireUserId } = await import("./verify.server");
     // Reject scripted cross-site/sibling requests before touching per-user data.
