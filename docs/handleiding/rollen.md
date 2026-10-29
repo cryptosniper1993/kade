@@ -9,7 +9,7 @@ De matrix staat op één plek in de code: `src/lib/auth/permissions.ts` (`PERMIS
 | Rol | Kort |
 | --- | --- |
 | **Eigenaar** | alles, ook leden en instellingen beheren |
-| **Boekhouder** | financiën en btw; ziet alles, geen bots of beheer |
+| **Boekhouder** | financiën, btw en dagelijks werk; ziet alles, geen bots of beheer |
 | **Medewerker** | dagelijks werk en concepten opmaken; geen geld-acties |
 | **Alleen lezen** | ziet alles, wijzigt niets |
 
@@ -18,7 +18,7 @@ De matrix staat op één plek in de code: `src/lib/auth/permissions.ts` (`PERMIS
 | Stap | Eigenaar | Boekhouder | Medewerker | Alleen lezen |
 | --- | :---: | :---: | :---: | :---: |
 | Alles bekijken | ✓ | ✓ | ✓ | ✓ |
-| Dagelijks werk (taken, projecten, personen, documenten, inventaris, incidenten, inkomende factuur uploaden) | ✓ | – | ✓ | – |
+| Dagelijks werk (taken, projecten, personen, documenten, inventaris, incidenten, inkomende factuur uploaden) | ✓ | ✓ | ✓ | – |
 | Concept-offertes en -facturen opmaken, relaties bijhouden | ✓ | ✓ | ✓ | – |
 | **1. Facturen en offertes versturen** (factuur uitreiken, via Peppol sturen, creditnota, offerte op *verstuurd*) | ✓ | ✓ | – | – |
 | **2. Btw-aangifte indienen** (voorbereiden, listings) | ✓ | ✓ | – | – |

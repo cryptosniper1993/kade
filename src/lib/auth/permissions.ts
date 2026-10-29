@@ -48,7 +48,7 @@ export const STEP_LABELS: Record<Step, string> = {
 
 export const PERMISSIONS: Record<Role, readonly Step[]> = {
   eigenaar: STEPS,
-  boekhouder: ["concept", "versturen", "btw", "peppol", "boeken"],
+  boekhouder: ["werk", "concept", "versturen", "btw", "peppol", "boeken"],
   medewerker: ["werk", "concept"],
   lezer: [],
 };

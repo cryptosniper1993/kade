@@ -14,7 +14,7 @@ import {
 
 const matrix: Record<Role, Step[]> = {
   eigenaar: ["werk", "concept", "versturen", "btw", "peppol", "boeken", "bots", "beheer"],
-  boekhouder: ["concept", "versturen", "btw", "peppol", "boeken"],
+  boekhouder: ["werk", "concept", "versturen", "btw", "peppol", "boeken"],
   medewerker: ["werk", "concept"],
   lezer: [],
 };
