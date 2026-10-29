@@ -28,6 +28,7 @@ import {
   Users,
   type LucideIcon,
   ListChecks,
+  Share2,
 } from "lucide-react";
 import { authEnabled, signOut } from "@/lib/auth/client";
 import { hasGateSessionMarker } from "@/lib/auth/gate-session-marker";
@@ -62,6 +63,7 @@ import { ProspectsView } from "@/components/views/prospects";
 import { ApprovalsView } from "@/components/views/approvals";
 import { AuditView } from "@/components/views/audit";
 import { SetupView } from "@/components/views/setup";
+import { SocialView } from "@/components/views/social";
 
 const GROUPS: { id: string; label: string; items: { id: string; label: string; icon: LucideIcon }[] }[] = [
   { id: "brug", label: "Brug", items: [{ id: "brug", label: "Brug", icon: Ship }] },
@@ -102,6 +104,7 @@ const GROUPS: { id: string; label: string; items: { id: string; label: string; i
       { id: "bots", label: "Bots", icon: Bot },
       { id: "logboek", label: "Logboek", icon: ScrollText },
       { id: "post", label: "Post", icon: Mail },
+      { id: "social", label: "Social", icon: Share2 },
     ],
   },
   { id: "grokbots", label: "GROK BOTS", items: [{ id: "grokbots", label: "Grok Bots", icon: BotMessageSquare }] },
@@ -309,6 +312,7 @@ export function Terminal({ user }: { user: AppUser }) {
             {desk && view === "prospectie" && <ProspectsView refresh={refresh} notice={ping} go={go} />}
             {desk && view === "goedkeuring" && <ApprovalsView notice={ping} />}
             {desk && view === "audit" && <AuditView />}
+            {view === "social" && <SocialView notice={ping} />}
             {desk && view === "setup" && <SetupView desk={desk} notice={ping} go={go} />}
           </main>
         </div>

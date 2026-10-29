@@ -14,6 +14,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as ApiBotSplatRouteImport } from './routes/api/bot/$'
 import { Route as ApiMailCallbackRouteImport } from './routes/api/mail/callback'
+import { Route as ApiSocialCallbackRouteImport } from './routes/api/social/callback'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -40,6 +41,11 @@ const ApiMailCallbackRoute = ApiMailCallbackRouteImport.update({
   path: '/api/mail/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiSocialCallbackRoute = ApiSocialCallbackRouteImport.update({
+  id: '/api/social/callback',
+  path: '/api/social/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -47,6 +53,7 @@ export interface FileRoutesByFullPath {
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/bot/$': typeof ApiBotSplatRoute
   '/api/mail/callback': typeof ApiMailCallbackRoute
+  '/api/social/callback': typeof ApiSocialCallbackRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -54,6 +61,7 @@ export interface FileRoutesByTo {
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/bot/$': typeof ApiBotSplatRoute
   '/api/mail/callback': typeof ApiMailCallbackRoute
+  '/api/social/callback': typeof ApiSocialCallbackRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -62,13 +70,25 @@ export interface FileRoutesById {
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/bot/$': typeof ApiBotSplatRoute
   '/api/mail/callback': typeof ApiMailCallbackRoute
+  '/api/social/callback': typeof ApiSocialCallbackRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/login' | '/api/auth/$' | '/api/bot/$' | '/api/mail/callback'
+    | '/'
+    | '/login'
+    | '/api/auth/$'
+    | '/api/bot/$'
+    | '/api/mail/callback'
+    | '/api/social/callback'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/api/auth/$' | '/api/bot/$' | '/api/mail/callback'
+  to:
+    | '/'
+    | '/login'
+    | '/api/auth/$'
+    | '/api/bot/$'
+    | '/api/mail/callback'
+    | '/api/social/callback'
   id:
     | '__root__'
     | '/'
@@ -76,6 +96,7 @@ export interface FileRouteTypes {
     | '/api/auth/$'
     | '/api/bot/$'
     | '/api/mail/callback'
+    | '/api/social/callback'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -84,6 +105,7 @@ export interface RootRouteChildren {
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiBotSplatRoute: typeof ApiBotSplatRoute
   ApiMailCallbackRoute: typeof ApiMailCallbackRoute
+  ApiSocialCallbackRoute: typeof ApiSocialCallbackRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -123,6 +145,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiMailCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/social/callback': {
+      id: '/api/social/callback'
+      path: '/api/social/callback'
+      fullPath: '/api/social/callback'
+      preLoaderRoute: typeof ApiSocialCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -132,6 +161,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiBotSplatRoute: ApiBotSplatRoute,
   ApiMailCallbackRoute: ApiMailCallbackRoute,
+  ApiSocialCallbackRoute: ApiSocialCallbackRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

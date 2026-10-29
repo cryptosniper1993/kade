@@ -4,6 +4,7 @@ import { progress, type CheckState } from "@/lib/setup-checks";
 import type { Desk } from "@/lib/types";
 import { PeppolSettings } from "@/components/views/peppol-settings";
 import { MailSettings } from "@/components/views/mail-settings";
+import { SocialConnections } from "@/components/views/social";
 import { Button, Kicker, Panel } from "@/components/ui";
 
 type Setup = Awaited<ReturnType<typeof loadSetup>>;
@@ -84,6 +85,7 @@ export function SetupView({ desk, notice, go }: { desk: Desk; notice: (m: string
           ))}
         </Panel>
       </section>
+      <section id="setup-social" className="flex flex-col gap-2"><h2 className="font-display text-2xl">Socials: status en verbreken</h2><SocialConnections notice={notice} /></section>
       <details className="flex flex-col gap-3"><summary className="cursor-pointer font-display text-2xl">Mailverbinding hier instellen</summary><MailSettings notice={notice} onChange={() => reload()} /></details>
       <details className="flex flex-col gap-3"><summary className="cursor-pointer font-display text-2xl">Peppol hier bekijken</summary><PeppolSettings desk={desk} notice={notice} /></details>
     </div>

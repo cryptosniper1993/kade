@@ -4,6 +4,7 @@ import { db, mapCompany } from "@/lib/ops-shared";
 import { env } from "@/lib/env.server";
 import { dbSource } from "@/lib/db";
 import { readMailRow } from "@/lib/ops-mail";
+import { socialStatus } from "@/lib/ops-social";
 import { readOutreachSettings } from "@/lib/ops-jam";
 import { MAIL_ENV } from "@/lib/mail";
 import { grokHealth, grokState } from "@/lib/grok-client";
@@ -30,7 +31,11 @@ export const loadSetup = createServerFn({ method: "GET" })
     const gh = grokHealth();
     const gs = grokState(gh);
     const ob = (await sql<{ n: number }>`select count(*)::int as n from grokbot_outbox where user_id = ${u} and status = 'wachtrij'`)[0]?.n ?? 0;
+    const soc = await socialStatus(sql, u).catch(() => []);
+    const socOn = soc.filter((x) => x.connected).map((x) => x.platform);
     const checks: SetupCheck[] = [
+      { id: "social", title: "Socials (Facebook, Instagram, TikTok)", required: false, state: state(socOn.length > 0, false), target: "social",
+        detail: socOn.length ? `Verbonden: ${socOn.join(", ")}.` : "Niet verbonden. Meta- en TikTok-app nodig, zie handleiding Social." },
       { id: "grok", title: "Grok (AI) en Grok Bots", required: false, state: gs === "ok" ? "ok" : gs === "storing" ? "ontbreekt" : "optioneel", target: "grokbots",
         detail: `${gs === "uit" ? "Geen XAI_API_KEY: AI-functies uit, de rest werkt." : gs === "storing" ? `Storing sinds ${new Date(gh.lastFailAt!).toLocaleString("nl-BE", { timeZone: "Europe/Brussels" })} (${gh.lastError}).` : gs === "ok" ? "Laatste AI-oproep geslaagd." : "Nog geen AI-oproep sinds de start."} Wachtrij Grok Bots: ${ob}.` },
       { id: "zaak", title: "Zaakfiche", required: true, state: state(companyOk, true), target: "zaak",

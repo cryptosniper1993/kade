@@ -13,6 +13,8 @@ KADE is de zaakterminal voor een Belgische IT-zaak (btw-nummer, ook in bijberoep
 
 Extra:
 
+- [stappenplan-koppelen.md](stappenplan-koppelen.md) — **begin hier**: alles wat Nick zelf moet koppelen, in volgorde met vinkjes.
+- [social.md](social.md) — Facebook, Instagram en TikTok: verbinden, posten, inplannen, beperkingen.
 - [grok-storing.md](grok-storing.md) — wat werkt er als Grok of de Grok Bots uitliggen (wachtrij, meldingen).
 - [setup.md](setup.md) — alle configuratie en status op één pagina.
 - [mail.md](mail.md) — mailverbinding (Outlook, Gmail, SMTP, mailprogramma) en Azure-app.

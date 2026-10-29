@@ -23,3 +23,7 @@ Bovenaan de **Checklist** met voortgang (verplichte punten + optionele die al OK
 | Verzendregels en verboden namen | minstens één verboden naam | Instellingen |
 
 Daaronder: de lijst **Netlify / env-variabelen** per groep, en de **Zoho en DMARC**-checklist (vinkjes worden in deze browser onthouden).
+
+## Socials
+
+Onder de kaarten staat **Socials: status en verbreken** met per platform *Verbonden* of *Niet verbonden*, ontbrekende variabelen, de redirect-URI en **Verbreek**. Zie [social.md](social.md). Het volledige stappenplan: [stappenplan-koppelen.md](stappenplan-koppelen.md).
