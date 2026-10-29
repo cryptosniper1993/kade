@@ -10,6 +10,7 @@ import {
   Compass,
   FileSignature,
   FileText,
+  FileInput,
   FolderKanban,
   ListTodo,
   Mail,
@@ -41,6 +42,7 @@ import { FiscalView } from "@/components/views/fiscal";
 import { HoofdView } from "@/components/views/hoofd";
 import { InventarisView } from "@/components/views/inventaris";
 import { InvoicesView } from "@/components/views/invoices";
+import { IncomingView } from "@/components/views/incoming";
 import { LogboekView } from "@/components/views/logboek";
 import { LootsView } from "@/components/views/loots";
 import { MailView } from "@/components/views/mail";
@@ -69,6 +71,7 @@ const GROUPS: { id: string; label: string; items: { id: string; label: string; i
       { id: "leveranciers", label: "Leveranciers", icon: Truck },
       { id: "offertes", label: "Offertes", icon: FileSignature },
       { id: "facturen", label: "Facturen", icon: FileText },
+      { id: "inkomend", label: "Inkomend", icon: FileInput },
       { id: "boeken", label: "Boeken", icon: BookOpen },
       { id: "balans", label: "Balans", icon: Scale },
       { id: "inventaris", label: "Inventaris", icon: Boxes },
@@ -267,6 +270,7 @@ export function Terminal({ user }: { user: AppUser }) {
             {desk && view === "schaar" && <FiscalView desk={desk} refresh={refresh} notice={ping} />}
             {desk && view === "offertes" && <QuotesView desk={desk} refresh={refresh} notice={ping} go={go} />}
             {desk && view === "facturen" && <InvoicesView desk={desk} refresh={refresh} notice={ping} />}
+            {desk && view === "inkomend" && <IncomingView desk={desk} refresh={refresh} notice={ping} />}
             {desk && view === "klanten" && <PartiesView kind="client" desk={desk} go={go} refresh={refresh} notice={ping} />}
             {desk && view === "leveranciers" && <PartiesView kind="supplier" desk={desk} go={go} refresh={refresh} notice={ping} />}
             {desk && view === "boeken" && <BooksView desk={desk} refresh={refresh} notice={ping} />}

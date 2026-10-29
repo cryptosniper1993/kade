@@ -1,0 +1,38 @@
+-- Inkomende facturen (aankoopfacturen) via Peppol of manuele UBL-upload.
+create table if not exists incoming_invoices (
+  id text primary key,
+  user_id text not null,
+  dedupe_key text not null,
+  kind text not null default 'invoice',
+  source text not null default 'upload',
+  provider_ref text not null default '',
+  number text not null,
+  issue_date text not null default '',
+  due_date text not null default '',
+  currency text not null default 'EUR',
+  supplier_id text,
+  supplier_name text not null,
+  supplier_vat text not null default '',
+  supplier_peppol_id text not null default '',
+  supplier_address text not null default '',
+  supplier_iban text not null default '',
+  payment_reference text not null default '',
+  buyer_name text not null default '',
+  buyer_peppol_id text not null default '',
+  notes text not null default '',
+  lines jsonb not null default '[]'::jsonb,
+  vat jsonb not null default '[]'::jsonb,
+  total_ex_vat numeric(14,2) not null default 0,
+  total_vat numeric(14,2) not null default 0,
+  total_incl_vat numeric(14,2) not null default 0,
+  payable numeric(14,2) not null default 0,
+  status text not null default 'nieuw',
+  booked boolean not null default false,
+  paid_on text not null default '',
+  pdf_name text not null default '',
+  pdf_base64 text not null default '',
+  xml text not null default '',
+  received_at timestamptz not null default now()
+);
+create unique index if not exists incoming_dedupe on incoming_invoices (user_id, dedupe_key);
+create index if not exists incoming_user_idx on incoming_invoices (user_id, received_at desc);

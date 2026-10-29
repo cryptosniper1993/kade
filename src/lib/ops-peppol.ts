@@ -8,64 +8,11 @@ import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { asLines, db, mapCompany, mapParty, str } from "@/lib/ops-shared";
 import { env } from "@/lib/env.server";
+import { adapter, NOT_CONNECTED } from "@/lib/peppol-adapter.server";
 import { ogmFromSequence } from "@/lib/finance";
 import { buildPeppolUbl, countryCode, parsePeppolId, peppolIdFromKbo, peppolProblems, sellerFromCompany } from "@/lib/peppol";
 import type { PeppolInput } from "@/lib/peppol";
 
-type Adapter = {
-  provider: string;
-  test(): Promise<void>;
-  isReceiver(peppolId: string): Promise<boolean>;
-  send(xml: string, receiver: string, sender: string): Promise<{ ref: string }>;
-};
-
-/**
- * Generiek contract (veel providers bieden iets gelijkaardigs; anders schrijf je hier een kleine adapter per provider):
- *   GET  {base}/health                          -> 2xx
- *   GET  {base}/participants/{peppolId}         -> 200 { registered: boolean } of 404
- *   POST {base}/documents (application/xml UBL) -> 2xx { id }
- * Authenticatie: Authorization: Bearer <PEPPOL_API_KEY>.
- */
-function adapter(): Adapter | null {
-  const base = env("PEPPOL_API_URL")?.replace(/\/+$/, "");
-  const key = env("PEPPOL_API_KEY");
-  if (!base || !key) return null;
-  const headers = { Authorization: `Bearer ${key}`, Accept: "application/json" };
-  async function call(path: string, init: RequestInit = {}): Promise<Response> {
-    const res = await fetch(`${base}${path}`, { ...init, headers: { ...headers, ...(init.headers ?? {}) }, signal: AbortSignal.timeout(15000) });
-    return res;
-  }
-  async function fail(res: Response, what: string): Promise<never> {
-    const body = (await res.text().catch(() => "")).slice(0, 200);
-    throw new Error(`${what}: provider antwoordde ${res.status}${body ? ` (${body})` : ""}.`);
-  }
-  return {
-    provider: env("PEPPOL_PROVIDER") || "Generieke access point",
-    async test() {
-      const res = await call("/health");
-      if (!res.ok) await fail(res, "Verbinding mislukt");
-    },
-    async isReceiver(id) {
-      const res = await call(`/participants/${encodeURIComponent(id)}`);
-      if (res.status === 404) return false;
-      if (!res.ok) await fail(res, "Opzoeken mislukt");
-      const json = (await res.json().catch(() => ({}))) as { registered?: boolean };
-      return json.registered !== false;
-    },
-    async send(xml, receiver, sender) {
-      const res = await call("/documents", {
-        method: "POST",
-        headers: { "Content-Type": "application/xml", "X-Peppol-Receiver": receiver, "X-Peppol-Sender": sender },
-        body: xml,
-      });
-      if (!res.ok) await fail(res, "Verzenden mislukt");
-      const json = (await res.json().catch(() => ({}))) as { id?: string };
-      return { ref: str(json.id, 120) };
-    },
-  };
-}
-
-const NOT_CONNECTED = "Peppol is niet verbonden. Neem een account bij een erkende Peppol-dienstverlener en zet PEPPOL_API_URL en PEPPOL_API_KEY als geheim op de server.";
 
 export const peppolConfig = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
