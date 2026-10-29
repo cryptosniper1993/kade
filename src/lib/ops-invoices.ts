@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
+import { requirePermission } from "@/lib/auth/permissions";
 import {
   DEFAULT_BOTS,
   LOOTS,
@@ -141,6 +142,7 @@ export const saveInvoice = createServerFn({ method: "POST" })
     };
   })
   .handler(async ({ context, data }) => {
+    requirePermission(context, data.book ? "versturen" : "concept");
     const sql = await db();
     const userId = context.userId;
     const companies = await sql<Record<string, unknown>>`select * from companies where user_id = ${userId}`;
@@ -198,6 +200,7 @@ export const createCreditNote = createServerFn({ method: "POST" })
     return id;
   })
   .handler(async ({ context, data }) => {
+    requirePermission(context, "versturen");
     const sql = await db();
     const userId = context.userId;
     const rows = await sql<Record<string, unknown>>`select * from invoices where id = ${data} and user_id = ${userId}`;
@@ -230,6 +233,7 @@ export const setInvoicePaid = createServerFn({ method: "POST" })
     return { id, paidOn };
   })
   .handler(async ({ context, data }) => {
+    requirePermission(context, "boeken");
     const sql = await db();
     const userId = context.userId;
     const rows = await sql<Record<string, unknown>>`
@@ -272,6 +276,7 @@ export const deleteDraftInvoice = createServerFn({ method: "POST" })
   // De UI stuurt soms een kale string, soms { id }: beide aanvaarden.
   .validator((input: unknown) => str(typeof input === "string" ? input : (input as { id?: string })?.id, 80))
   .handler(async ({ context, data: id }) => {
+    requirePermission(context, "concept");
     if (!id) throw new Error("Factuur ontbreekt.");
     const sql = await db();
     await sql`delete from invoices where id = ${id} and user_id = ${context.userId} and status = 'draft'`;

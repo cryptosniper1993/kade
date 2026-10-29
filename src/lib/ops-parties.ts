@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
+import { requirePermission } from "@/lib/auth/permissions";
 import {
   DEFAULT_BOTS,
   LOOTS,
@@ -36,6 +37,7 @@ export const saveClient = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((input: unknown) => partyInput(input, "klant"))
   .handler(async ({ context, data }) => {
+    requirePermission(context, "concept");
     const sql = await db();
     const id = data.id || uid();
     if (data.id) {
@@ -70,6 +72,7 @@ export const saveSupplier = createServerFn({ method: "POST" })
     return { ...party, account };
   })
   .handler(async ({ context, data }) => {
+    requirePermission(context, "concept");
     const sql = await db();
     const id = data.id || uid();
     if (data.id) {
@@ -104,6 +107,7 @@ export const setPartyActive = createServerFn({ method: "POST" })
     return { id, kind: row.kind === "supplier" ? "supplier" as const : "client" as const, active: Boolean(row.active) };
   })
   .handler(async ({ context, data }) => {
+    requirePermission(context, "concept");
     const sql = await db();
     if (data.kind === "supplier") {
       await sql`update suppliers set active = ${data.active} where id = ${data.id} and user_id = ${context.userId}`;
@@ -122,6 +126,7 @@ export const deleteParty = createServerFn({ method: "POST" })
     return { id, kind: row.kind === "supplier" ? "supplier" as const : "client" as const };
   })
   .handler(async ({ context, data }) => {
+    requirePermission(context, "concept");
     const sql = await db();
     const userId = context.userId;
     if (data.kind === "client") {

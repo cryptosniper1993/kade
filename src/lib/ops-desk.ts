@@ -1,6 +1,7 @@
 import { asTreatment } from "@/lib/invoicing";
 import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
+import { requirePermission } from "@/lib/auth/permissions";
 import {
   DEFAULT_BOTS,
   LOOTS,
@@ -207,6 +208,7 @@ export const saveCompany = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((input: unknown) => parseCompany(input))
   .handler(async ({ context, data }) => {
+    requirePermission(context, "beheer");
     const sql = await db();
     await sql`
       insert into companies (

@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
+import { requirePermission } from "@/lib/auth/permissions";
 import { asLines, dateStr, db, mapCompany, str, uid } from "@/lib/ops-shared";
 import { QUOTE_STATUSES, canMove, conversionBlocker, invoiceDraftFromQuote, nextQuoteNumber, type Quote, type QuoteStatus } from "@/lib/quotes";
 import { brusselsToday } from "@/lib/day";
@@ -57,6 +58,7 @@ export const saveQuote = createServerFn({ method: "POST" })
     };
   })
   .handler(async ({ context, data }) => {
+    requirePermission(context, "concept");
     const sql = await db();
     const userId = context.userId;
     const companies = await sql<Record<string, unknown>>`select * from companies where user_id = ${userId}`;
@@ -93,6 +95,7 @@ export const setQuoteStatus = createServerFn({ method: "POST" })
     return { id: str(row.id, 80), status };
   })
   .handler(async ({ context, data }) => {
+    requirePermission(context, data.status === "verstuurd" ? "versturen" : "concept");
     const sql = await db();
     const rows = await sql<Record<string, unknown>>`select status from quotes where id = ${data.id} and user_id = ${context.userId}`;
     if (!rows[0]) throw new Error("Offerte niet gevonden.");
@@ -106,6 +109,7 @@ export const deleteConceptQuote = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((input: unknown) => str(typeof input === "string" ? input : (input as { id?: string })?.id, 80))
   .handler(async ({ context, data: id }) => {
+    requirePermission(context, "concept");
     const sql = await db();
     await sql`delete from quotes where id = ${id} and user_id = ${context.userId} and status = 'concept'`;
     return { ok: true as const };
@@ -121,6 +125,7 @@ export const convertQuoteToInvoice = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((input: unknown) => str(typeof input === "string" ? input : (input as { id?: string })?.id, 80))
   .handler(async ({ context, data: id }) => {
+    requirePermission(context, "concept");
     const sql = await db();
     const userId = context.userId;
     const rows = await sql<Record<string, unknown>>`select * from quotes where id = ${id} and user_id = ${userId}`;

@@ -4,6 +4,7 @@
  */
 import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
+import { requirePermission } from "@/lib/auth/permissions";
 import { dateStr, db, hasRef, insertJournal, str, uid } from "@/lib/ops-shared";
 import { adapter, NOT_CONNECTED } from "@/lib/peppol-adapter.server";
 import { accountName, isKnownAccount } from "@/lib/accounts";
@@ -112,6 +113,7 @@ export const uploadIncoming = createServerFn({ method: "POST" })
     return xml;
   })
   .handler(async ({ context, data }) => {
+    requirePermission(context, "werk");
     const sql = await db();
     const r = await store(sql, context.userId, data, "upload", "");
     return { ...r, message: r.created ? `Factuur ${r.number} van ${r.supplier} toegevoegd.` : `Factuur ${r.number} van ${r.supplier} stond er al.` };
@@ -120,6 +122,7 @@ export const uploadIncoming = createServerFn({ method: "POST" })
 export const pollIncoming = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {
+    requirePermission(context, "peppol");
     const a = adapter();
     if (!a) return { ok: false as const, message: NOT_CONNECTED, created: 0, skipped: 0, failed: 0 };
     const sql = await db();
@@ -175,6 +178,7 @@ export const setIncomingStatus = createServerFn({ method: "POST" })
     return { id: idOnly(input), status };
   })
   .handler(async ({ context, data }) => {
+    requirePermission(context, "peppol");
     const sql = await db();
     const rows = await sql<{ status: string }>`select status from incoming_invoices where id = ${data.id} and user_id = ${context.userId}`;
     if (!rows[0]) throw new Error("Factuur niet gevonden.");
@@ -188,6 +192,7 @@ export const linkIncomingSupplier = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((input: unknown) => ({ id: idOnly(input), supplierId: str((input as { supplierId?: string })?.supplierId, 80) || null }))
   .handler(async ({ context, data }) => {
+    requirePermission(context, "peppol");
     const sql = await db();
     if (data.supplierId) {
       const known = await sql<{ id: string }>`select id from suppliers where id = ${data.supplierId} and user_id = ${context.userId}`;
@@ -206,6 +211,7 @@ export const bookIncoming = createServerFn({ method: "POST" })
     return { id: idOnly(input), account };
   })
   .handler(async ({ context, data }) => {
+    requirePermission(context, "boeken");
     const sql = await db();
     const userId = context.userId;
     const rows = await sql<Record<string, unknown>>`select * from incoming_invoices where id = ${data.id} and user_id = ${userId}`;
@@ -230,6 +236,7 @@ export const markIncomingPaid = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((input: unknown) => ({ id: idOnly(input), date: dateStr((input as { date?: string })?.date) }))
   .handler(async ({ context, data }) => {
+    requirePermission(context, "boeken");
     const sql = await db();
     const userId = context.userId;
     const rows = await sql<Record<string, unknown>>`select * from incoming_invoices where id = ${data.id} and user_id = ${userId}`;
@@ -253,6 +260,7 @@ export const deleteIncoming = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator(idOnly)
   .handler(async ({ context, data }) => {
+    requirePermission(context, "peppol");
     const sql = await db();
     const rows = await sql<{ booked: boolean }>`select booked from incoming_invoices where id = ${data} and user_id = ${context.userId}`;
     if (!rows[0]) return { ok: true as const };

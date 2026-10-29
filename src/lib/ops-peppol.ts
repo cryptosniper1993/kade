@@ -6,6 +6,7 @@
  */
 import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
+import { requirePermission } from "@/lib/auth/permissions";
 import { asLines, db, mapCompany, mapParty, str } from "@/lib/ops-shared";
 import { env } from "@/lib/env.server";
 import { adapter, NOT_CONNECTED } from "@/lib/peppol-adapter.server";
@@ -26,7 +27,8 @@ export const peppolConfig = createServerFn({ method: "GET" })
 
 export const testPeppol = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .handler(async () => {
+  .handler(async ({ context }) => {
+    requirePermission(context, "beheer");
     const a = adapter();
     if (!a) return { ok: false as const, message: NOT_CONNECTED };
     try {
@@ -120,6 +122,7 @@ export const sendInvoicePeppol = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator(idInput)
   .handler(async ({ context, data }) => {
+    requirePermission(context, "versturen");
     const sql = await db();
     const userId = context.userId;
     const status = await sql<{ status: string; peppol_status: string }>`
