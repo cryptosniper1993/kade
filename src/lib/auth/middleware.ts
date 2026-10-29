@@ -44,6 +44,12 @@ export const authMiddleware = createMiddleware({ type: "function" })
     const { requireUserId } = await import("./verify.server");
     // Reject scripted cross-site/sibling requests before touching per-user data.
     assertSameSiteRequest();
-    const userId = await requireUserId(context.bearerToken);
-    return next({ context: { userId } });
+    const actorId = await requireUserId(context.bearerToken);
+    // Rollen: `userId` is vanaf hier de ZAAK (de bestaande scope van elke query),
+    // `actorId` het ingelogde account en `role` zijn rol in die zaak. Schrijvende
+    // server functions roepen `requirePermission(context, stap)` aan
+    // (zie `permissions.ts`).
+    const { membershipFor } = await import("./membership.server");
+    const { zaakId, role } = await membershipFor(actorId);
+    return next({ context: { userId: zaakId, actorId, role } });
   });
