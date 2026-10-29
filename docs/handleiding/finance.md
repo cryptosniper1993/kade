@@ -1,6 +1,6 @@
 # Finance
 
-Finance bevat: **Klanten, Leveranciers, Offertes, Facturen, Inkomend, Boeken, Balans, Inventaris, Analyse, Schaar, Archief.** Bedragen zijn in euro; is de zaak vrijgesteld (art. 56bis, zie Beheer → Zaak) dan rekent Kade geen btw.
+Finance bevat: **Klanten, Leveranciers, Offertes, Facturen, Inkomend, Boeken, Balans, Inventaris, Analyse, Schaar, Archief.** Bedragen zijn in euro; is de zaak vrijgesteld (vrijstellingsregeling art. 56bis, zie Beheer → Zaak) dan rekent Kade geen btw en zet het de vermelding "Bijzondere vrijstellingsregeling van belasting" op de factuur.
 
 ---
 
@@ -47,7 +47,7 @@ Detail van een relatie: **Facturen** (nummer, status betaald/open/concept), **Ko
 2. Vul **Datum**, **Geldig tot** (standaard +30 dagen), optioneel **Project**, de lijnen en **Nota**.
 3. **Offerte bewaren** → nummer `OF-JJJJ-NNN`, status *concept*.
 4. Zet de status: **Verstuurd**, **Goedgekeurd** of **Afgewezen**.
-5. Na het werk: **Werk gedaan → omzetten naar factuur**. Kade maakt een conceptfactuur met dezelfde klant en lijnen en opent Facturen. Een offerte kan maar één keer omgezet worden (status *gefactureerd*).
+5. Na het werk: **Werk gedaan → omzetten naar factuur**. Kade maakt een conceptfactuur (nog zonder nummer; het nummer volgt bij uitreiken) met dezelfde klant en lijnen en opent Facturen. Een offerte kan maar één keer omgezet worden (status *gefactureerd*).
 
 ### Alle opties
 
@@ -57,7 +57,7 @@ Detail van een relatie: **Facturen** (nummer, status betaald/open/concept), **Ko
 | Klant, Btw klant, Adres | vrij (ingevuld vanuit de klant) |
 | Datum, Geldig tot | datum |
 | Project (optioneel) | **Geen project** of een project |
-| Lijn: Omschrijving, Aantal, Prijs excl., Btw | btw **21% / 6% / 0%** (niet zichtbaar bij vrijstelling) |
+| Lijn: Omschrijving, Aantal, Prijs excl., Btw | btw **21% / 12% / 6% / 0%** (niet zichtbaar bij vrijstelling) |
 | Nota | |
 
 Knoppen: **Lijn**, **Offerte bewaren**, **Nieuw**; per offerte **Open**, **Verstuurd**, **Goedgekeurd**, **Afgewezen**, **Weg** (alleen concept), **Werk gedaan → omzetten naar factuur** (alleen goedgekeurd), **Naar factuur**.
@@ -67,16 +67,38 @@ Statussen: concept, verstuurd, goedgekeurd, afgewezen, gefactureerd.
 
 ## Facturen (verkoop)
 
-**Doel:** verkoopfacturen maken, boeken als vordering, versturen via Peppol en betalingen boeken.
+**Doel:** verkoopfacturen en creditnota's maken, boeken als vordering, versturen via Peppol en betalingen boeken.
 
 ### Stap voor stap
 
 1. Kies **Bestaande klant** (of **Nieuwe klant**), vul **Klant**, **Btw klant**, **Adres**, **Datum**, **Vervaldag**, lijnen en **Nota**.
-2. Kies:
-   - **Concept** – bewaren zonder boeken;
-   - **Enkel boeken** – definitief nummer (`K-JJJJ-NNN`), geboekt als vordering;
-   - **Factuur OK en stuur uit** – boeken én meteen via Peppol versturen. Heeft de klant geen Peppol-ID, dan wordt de factuur wel geboekt en vraagt Kade de UBL te downloaden en anders te bezorgen.
-3. In de lijst: **Betaald** boekt de betaling op de bank; **UBL** downloadt de Peppol-XML; **Verstuur via Peppol** voor een geboekte, nog niet verstuurde factuur.
+2. Kies de **Btw-regeling** (zie tabel) en vink **Particulier** aan als de klant geen onderneming is.
+3. Kade controleert terwijl je typt en toont waarschuwingen: btw-nummer van de klant (formaat en controlegetal), toegelaten btw-tarieven, vervaldag niet vóór de factuurdatum, en voor B2B een btw-nummer. Een fout blokkeert het uitreiken; een concept mag onvolledig zijn.
+4. Kies:
+   - **Concept** – bewaren zonder boeken en **zonder nummer** (in de lijst "Concept", in het voorbeeld "Nummer bij uitreiken");
+   - **Enkel boeken** – uitreiken: Kade kent het definitieve nummer toe en boekt de vordering;
+   - **Factuur OK en stuur uit** – uitreiken én meteen via Peppol versturen. Heeft de klant geen Peppol-ID, dan wordt de factuur wel geboekt en vraagt Kade de UBL te downloaden en anders te bezorgen.
+5. **Peppol verplicht (sinds 1/1/2026):** is de klant een Belgische btw-plichtige (B2B), dan moet de factuur via Peppol. Kies je **Enkel boeken**, dan vraagt Kade een bevestiging met de reden; die wordt bij de factuur bewaard (*niet via Peppol*). Zonder bevestiging wordt niet uitgereikt.
+6. In de lijst: **Betaald** boekt de betaling op de bank; **UBL** downloadt de Peppol-XML; **Verstuur via Peppol** voor een geboekte, nog niet verstuurde factuur; **Creditnota** maakt een creditnota op die factuur.
+
+### Nummering
+
+- Facturen: `K-JJJJ-NNN`, creditnota's: `C-JJJJ-NNN`, elk een eigen, doorlopende reeks per jaar zonder gaten.
+- Het nummer wordt pas toegekend bij uitreiken (niet bij een concept), atomair in de databank: twee gelijktijdige uitreikingen kunnen nooit hetzelfde nummer krijgen, en een nummer is uniek per zaak.
+- De gestructureerde mededeling (OGM, `+++…+++`) komt uit een eigen teller en wordt bij uitreiken vastgelegd; ze staat op het voorbeeld, in de UBL en wordt nooit herberekend.
+- Een concept kan je met **Weg** verwijderen; een uitgereikte factuur niet (maak een creditnota).
+
+### Creditnota
+
+1. Druk bij een uitgereikte factuur op **Creditnota** en bevestig. Je krijgt een concept met dezelfde klant, regeling en lijnen, en de nota "Creditnota op factuur …".
+2. Pas aan (bv. enkel een deel crediteren) en reik uit met **Enkel boeken** of **Creditnota OK en stuur uit**. Nummer `C-JJJJ-NNN`.
+3. Boeking: omgekeerd aan de factuur (omzet 7000 en btw 4510 in debet, klant 4000 in credit).
+4. **Terugbetaald** boekt de terugbetaling (4000 aan 5500 bank).
+5. In Peppol/UBL gaat een creditnota als *CreditNote* (type 381) met verwijzing naar de oorspronkelijke factuur.
+
+### Voorbeeld (rechts)
+
+Toont: Factuur of Creditnota, nummer (of "Nummer bij uitreiken"), jouw naam, adres, btw- en ondernemingsnummer, de klant (met Peppol-ID), datum en vervaldag, per lijn aantal, eenheidsprijs, btw-tarief en bedrag excl., de btw **per tarief**, totaal, IBAN met OGM, en de verplichte wettelijke vermelding van de gekozen regeling.
 
 ### Alle opties
 
@@ -84,10 +106,14 @@ Statussen: concept, verstuurd, goedgekeurd, afgewezen, gefactureerd.
 | --- | --- |
 | Bestaande klant | **Nieuwe klant** of een klant |
 | Klant, Btw klant, Adres, Datum, Vervaldag, Nota | |
-| Lijn: Omschrijving, Aantal, Prijs excl., Btw | **21% / 6% / 0%** |
+| Btw-regeling | **Belgische btw** (gewone tarieven); **Verlegging van heffing (medecontractant, BE)** – 0%, vermelding art. 20 §3 KB nr. 1; **Intracommunautaire levering van goederen** – 0%, vermelding art. 39bis W.Btw; **Intracommunautaire dienst (B2B, andere lidstaat)** – 0%, vermelding art. 21 §2 W.Btw. Niet zichtbaar bij vrijstellingsregeling: dan altijd 0% met de vermelding "Bijzondere vrijstellingsregeling van belasting". |
+| Particulier | vinkje: klant is geen onderneming, geen btw-nummer nodig, geen Peppol-plicht |
+| Lijn: Omschrijving, Aantal, Prijs excl., Btw | **21% / 12% / 6% / 0%** (alleen bij Belgische btw) |
 
-Knoppen: **Lijn**, **Concept**, **Enkel boeken**, **Factuur OK en stuur uit**; per factuur **Open** en **Weg** (concept), **Betaald** (open), **UBL** (geboekt), **Verstuur via Peppol**.
-Status in de lijst: concept / open / betaald, en *niet via Peppol* / *verzonden via Peppol* / *Peppol-fout* (fout als tooltip).
+De wettelijke vermelding wordt automatisch onderaan de nota toegevoegd. Bij verlegging en intracommunautair is het btw-nummer van de klant verplicht (bij IC een buitenlands nummer).
+
+Knoppen: **Lijn**, **Concept**, **Enkel boeken**, **Factuur OK en stuur uit** (bij een creditnota **Creditnota OK en stuur uit**), **Nieuw**; per factuur **Open** en **Weg** (concept), **Betaald** of **Terugbetaald** (open), **Creditnota** (uitgereikte factuur), **UBL** (geboekt), **Verstuur via Peppol**.
+Status in de lijst: Concept / open / betaald, en *niet via Peppol* / *verzonden via Peppol* / *Peppol-fout* (fout als tooltip).
 
 ---
 
@@ -134,7 +160,12 @@ Statussen: **nieuw**, **goedgekeurd**, **betaald**, **betwist**. Betaald is eind
 1. Kies **Soort**, **Datum**, **Omschrijving**, **Rekening**, bedrag en **Btw**.
 2. Bij een kost: vink **Meteen betaald via de bank** aan of niet (dan schuld aan leverancier).
 3. **Boeken**. Het **Journaal** toont de laatste 40 boekingen; manuele boekingen kan je verwijderen (factuurboekingen niet).
-4. Onder **Belgische plichten, 2026** staat een samenvatting van de regels (geen advies op maat).
+4. **Btw-aangifte voorbereiden**: kies **Jaar** en **Kwartaal** (of **Maand** bij maandaangifte, of **Heel jaar (listings)**) en druk **Bereken**. Kade toont:
+   - de roosters van de periodieke aangifte (00, 01, 02, 03, 44, 45, 46, 49, 54, 59, 63, 64, 71/72, 82, 85) uit uitgereikte facturen/creditnota's en geboekte inkomende facturen (demogegevens tellen niet mee). Roosters 55, 56, 81, 83, 86, 87 en 88 vul je zelf aan (investeringen, IC-aankopen, …);
+   - downloads: Intervat-XML van de aangifte, de **jaarlijkse klantenlisting** (Belgische btw-klanten vanaf € 250 per jaar, creditnota's afgetrokken) en de **intracommunautaire opgave** (L = goederen, S = diensten);
+   - bij vrijstellingsregeling: de omzet voor de **omzetopgave** (uiterlijk 31 maart, ook nihil) en de stand tegenover de omzetdrempel.
+   Controleer altijd in Intervat vóór je indient; de XML-bestanden zijn een hulp, niet gevalideerd tegen het officiële schema.
+5. Onder **Belgische plichten** staat een samenvatting van de regels en deadlines (geen advies op maat). Een deadline op zaterdag of zondag schuift naar de volgende maandag (feestdagen niet). In bijberoep komen er de kwartaalbijdragen sociale zekerheid bij; zolang de rechtsvorm niet gekozen is, staat bovenaan "Kies je rechtsvorm". Boekhouding en facturen bewaar je **7 jaar** (art. 60 W.Btw, art. III.86 WER).
 
 | Veld | Opties |
 | --- | --- |

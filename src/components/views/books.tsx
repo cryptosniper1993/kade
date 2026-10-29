@@ -3,6 +3,7 @@ import { EXPENSE_ACCOUNTS } from "@/lib/accounts";
 import { deleteJournal, postEntry } from "@/lib/ops";
 import { euroLabel } from "@/lib/money";
 import { TAX_GUIDE } from "@/lib/tax";
+import { VatReturnPanel } from "@/components/views/vat-return";
 import type { Desk } from "@/lib/types";
 import { Button, Field, Kicker, Panel, Select, TextInput } from "@/components/ui";
 
@@ -135,6 +136,7 @@ export function BooksView({ desk, refresh, notice }: { desk: Desk; refresh: () =
           </ul>
         </Panel>
       </div>
+      <VatReturnPanel desk={desk} notice={notice} />
       <Panel>
         <Kicker>Belgische plichten, 2026</Kicker>
         <p className="mt-2 text-sm text-mist">Samengevat uit de regels voor een kleine zaak. Geen advies op maat. De aangifte blijft van jou en je boekhouder.</p>

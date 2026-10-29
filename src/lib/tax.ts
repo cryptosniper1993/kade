@@ -1,4 +1,4 @@
-import { isCompanyForm, type Snapshot } from "./finance";
+import { isCompanyForm, type Snapshot } from "./finance.ts";
 import type { Company, Invoice } from "./types";
 
 export type Tip = { id: string; tone: "act" | "watch" | "ok"; title: string; body: string };
@@ -25,15 +25,54 @@ function daysBetween(today: Date, date: string): number {
   return Math.round((b - a) / 86_400_000);
 }
 
-function weekendNote(date: string): string {
+/** Valt een deadline op zaterdag of zondag, dan schuift ze naar maandag. Feestdagen worden niet meegerekend. */
+export function shiftWeekend(date: string): string {
   const [y, m, d] = date.split("-").map(Number);
-  const day = new Date(Date.UTC(y, m - 1, d)).getUTCDay();
-  if (day === 0 || day === 6) return " Die datum valt in het weekend. Intervat schuift vaak naar de eerstvolgende werkdag. Kijk na.";
-  return "";
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  const day = dt.getUTCDay();
+  if (day === 6) dt.setUTCDate(dt.getUTCDate() + 2);
+  else if (day === 0) dt.setUTCDate(dt.getUTCDate() + 1);
+  return dt.toISOString().slice(0, 10);
+}
+
+function weekendNote(date: string): string {
+  const shifted = shiftWeekend(date);
+  if (shifted === date) return "";
+  const nice = (iso: string) => iso.split("-").reverse().join("/");
+  return ` De wettelijke datum (${nice(date)}) valt in het weekend; de deadline schuift naar ${nice(shifted)}. Feestdagen schuiven ook: kijk de Intervat-kalender na.`;
+}
+
+/**
+ * Omzetdrempel vrijstellingsregeling kleine ondernemingen (art. 56bis W.Btw), excl. btw.
+ * 2025-2026: 25.000 euro (FOD Financiën). Vanaf 2027: 26.000 euro volgens de wet van 23/9/2026
+ * (BS 7/10/2026) — de FOD-pagina vermeldde in oktober 2026 nog enkel 25.000: controleer.
+ * Altijd overschrijfbaar via de zaakfiche (exemptThreshold).
+ */
+export const EXEMPT_THRESHOLDS: Record<number, number> = { 2025: 25000, 2026: 25000, 2027: 26000 };
+/** Overschrijding tot 10% boven de drempel: vrijstelling verloren pas vanaf 1 januari van het volgende jaar. */
+export const EXEMPT_TOLERANCE = 0.1;
+
+export function exemptThreshold(year: number, override?: number | null): number {
+  if (override && override > 0) return override;
+  const years = Object.keys(EXEMPT_THRESHOLDS).map(Number).sort((a, b) => a - b);
+  const known = years.filter((y) => y <= year).pop() ?? years[0];
+  return EXEMPT_THRESHOLDS[known];
+}
+
+export type ThresholdState = "under" | "near" | "tolerance" | "over";
+export function thresholdState(turnover: number, threshold: number): ThresholdState {
+  if (turnover > threshold * (1 + EXEMPT_TOLERANCE)) return "over";
+  if (turnover > threshold) return "tolerance";
+  if (turnover > threshold * 0.72) return "near";
+  return "under";
+}
+
+function euro(n: number): string {
+  return n.toLocaleString("nl-BE", { maximumFractionDigits: 0 });
 }
 
 export function duties(company: Company | null, today = new Date()): Duty[] {
-  const form = company?.legalForm ?? "bv";
+  const form = company?.legalForm || "";
   const regime = company?.vatRegime ?? "quarterly";
   const yearEnd = company?.yearEndMonth ?? 12;
   const y = today.getFullYear();
@@ -49,7 +88,7 @@ export function duties(company: Company | null, today = new Date()): Duty[] {
         id: "vat-m",
         title: "Btw-aangifte",
         detail: `Maandaangifte voor ${label}. Uiterlijk de 20e, ook als alles nul is.${weekendNote(iso(next))}`,
-        date: iso(next),
+        date: shiftWeekend(iso(next)),
       });
     } else {
       const candidates = [
@@ -64,14 +103,14 @@ export function duties(company: Company | null, today = new Date()): Duty[] {
         id: "vat-q",
         title: `Btw-aangifte ${pick.period}`,
         detail: `Kwartaalaangifte via Intervat, uiterlijk de 25e. Een maand zonder facturen is nog altijd een nihil-aangifte.${weekendNote(iso(pick.date))}`,
-        date: iso(pick.date),
+        date: shiftWeekend(iso(pick.date)),
       });
     }
   } else {
     items.push({
       id: "vat-exempt",
       title: "Btw-vrijstelling",
-      detail: "Onder de drempel van 25.000 euro omzet reken je geen btw aan en doe je geen periodieke aangifte. Je verliest wel de aftrek. De jaarlijkse listing blijft.",
+      detail: `Onder de drempel van ${euro(exemptThreshold(y, company?.exemptThreshold))} euro omzet (${y}) reken je geen btw aan en doe je geen periodieke aangifte. Je verliest wel de aftrek. Op elke factuur staat "Bijzondere vrijstellingsregeling van belasting". De jaarlijkse omzetopgave en klantenlisting blijven.`,
       date: iso(new Date(y, today.getMonth(), today.getDate())),
     });
   }
@@ -80,8 +119,12 @@ export function duties(company: Company | null, today = new Date()): Duty[] {
   items.push({
     id: "listing",
     title: "Klantenlisting",
-    detail: "Jaarlijkse opgave via Intervat, ook een nihil-listing als er geen Belgische btw-plichtige klanten waren. Drempel van de vrijstellingsregeling: 25.000 euro omzet.",
-    date: iso(new Date(listingYear, 2, 31)),
+    detail:
+      (regime === "exempt"
+        ? "Klantenlisting én totale omzet van vorig jaar (vrijstellingsregeling) via Intervat, ook '0,00' als er niets was."
+        : "Jaarlijkse opgave via Intervat van Belgische btw-plichtige klanten vanaf 250 euro, ook een nihil-listing als er geen waren.") +
+      weekendNote(iso(new Date(listingYear, 2, 31))),
+    date: shiftWeekend(iso(new Date(listingYear, 2, 31))),
   });
 
   const prepay = [
@@ -100,6 +143,27 @@ export function duties(company: Company | null, today = new Date()): Duty[] {
         date,
       });
     }
+  }
+
+  if (!form) {
+    items.push({
+      id: "form",
+      title: "Kies je rechtsvorm",
+      detail: "Kade weet nog niet of je een eenmanszaak of vennootschap bent. Vul de rechtsvorm in op de zaakfiche, dan kloppen de plichten hieronder.",
+      date: iso(today),
+    });
+  }
+
+  if (!isCompanyForm(form) && company?.activityStatus !== "hoofdberoep" && form) {
+    const quarterEnds = [new Date(y, 2, 31), new Date(y, 5, 30), new Date(y, 8, 30), new Date(y, 11, 31), new Date(y + 1, 2, 31)];
+    const end = quarterEnds.find((d) => daysBetween(today, iso(d)) >= -5) ?? quarterEnds[4];
+    items.push({
+      id: "social-q",
+      title: "Sociale bijdragen (bijberoep)",
+      detail:
+        "Voorlopige kwartaalbijdrage aan je sociaal verzekeringsfonds, te betalen vóór het einde van het kwartaal. In bijberoep betaal je pas bijdragen boven een inkomensdrempel en geldt geen minimumbijdrage zoals in hoofdberoep; het fonds rekent af op je definitieve beroepsinkomen. Vraag de actuele drempel en het bedrag na bij je fonds.",
+      date: iso(end),
+    });
   }
 
   if (isCompanyForm(form)) {
@@ -136,7 +200,7 @@ export function duties(company: Company | null, today = new Date()): Duty[] {
     items.push({
       id: "pb",
       title: "Personenbelasting",
-      detail: "Een eenmanszaak dient een aangifte personenbelasting in, geen vennootschapsbelasting. Sociale bijdragen lopen via je sociaal verzekeringsfonds, op basis van je beroepsinkomen." +
+      detail: "Aangifte personenbelasting (Tax-on-web/MyMinfin): je winst of baten als zelfstandige komen in deel 2. De exacte indiendatum staat op je aangifte en verschilt per jaar; via een boekhouder later. Een eenmanszaak betaalt geen vennootschapsbelasting. Sociale bijdragen lopen via je sociaal verzekeringsfonds, op basis van je beroepsinkomen." +
         (company?.activityStatus === "hoofdberoep"
           ? " In hoofdberoep geldt een minimumbijdrage, ook bij lage inkomsten."
           : " In bijberoep gelden andere regels: onder een inkomensdrempel betaal je weinig of geen sociale bijdragen. Vraag de actuele drempel na bij je sociaal verzekeringsfonds."),
@@ -218,12 +282,20 @@ export function dailyTips(snapshot: Snapshot, company: Company | null, invoices:
     });
   }
 
-  if (company?.vatRegime === "exempt" && snapshot.income > 18000) {
+  const limit = exemptThreshold(today.getFullYear(), company?.exemptThreshold);
+  const state = thresholdState(snapshot.income, limit);
+  if (company?.vatRegime === "exempt" && state !== "under") {
+    const max = Math.round(limit * (1 + EXEMPT_TOLERANCE));
     tips.push({
       id: "threshold",
-      tone: "act",
-      title: "De vrijstellingsdrempel komt in zicht",
-      body: "25.000 euro omzet exclusief btw is de grens van de kleine-ondernemersregeling. Erop overgaan betekent btw aanrekenen én aftrekken. Dat is vaak gunstig zodra je zelf btw betaalt op kosten. Onder de drempel blijven is een keuze, geen automatisme.",
+      tone: state === "near" ? "watch" : "act",
+      title: state === "over" ? "Vrijstellingsdrempel + 10% overschreden" : state === "tolerance" ? "Drempel overschreden, binnen de 10%-marge" : "De vrijstellingsdrempel komt in zicht",
+      body:
+        state === "over"
+          ? `Je omzet (${euro(snapshot.income)} euro) ligt boven ${euro(max)} euro (drempel ${euro(limit)} + 10%). Je verliest de vrijstelling vanaf de handeling die de grens overschrijdt: vanaf dan btw aanrekenen en aangifte doen. Meld het via e604B en spreek je boekhouder.`
+          : state === "tolerance"
+            ? `Je omzet (${euro(snapshot.income)} euro) ligt boven de drempel van ${euro(limit)} euro maar onder ${euro(max)} euro. Je blijft dit jaar vrijgesteld; vanaf 1 januari volgend jaar word je normaal btw-plichtig.`
+            : `${euro(limit)} euro omzet exclusief btw is de grens dit jaar (met 10% tolerantie tot ${euro(max)} euro). Erop overgaan betekent btw aanrekenen én aftrekken. Onder de drempel blijven is een keuze, geen automatisme.`,
     });
   }
 
@@ -241,7 +313,7 @@ export function dailyTips(snapshot: Snapshot, company: Company | null, invoices:
       id: "calm",
       tone: "ok",
       title: "Geen brand op de brug",
-      body: "De cijfers schreeuwen niks. Bewaar bonnen en facturen tien jaar voor de fiscus, zeven jaar voor het boekhoudrecht. En dien een nihil-aangifte toch in. Stilte is geen vrijstelling.",
+      body: "De cijfers schreeuwen niks. Bewaar facturen en btw-stukken zeven jaar (art. 60 W.Btw, sinds de wet van 18/12/2025 opnieuw zeven in plaats van tien jaar) en boekhoudkundige stukken zeven jaar (art. III.86 WER). En dien een nihil-aangifte toch in. Stilte is geen vrijstelling.",
     });
   }
 
@@ -267,7 +339,7 @@ export const TAX_GUIDE: { title: string; body: string }[] = [
   },
   {
     title: "Btw",
-    body: "IT-diensten in België zijn in de regel 21%. Kwartaalindieners dienen in tegen de 25e van de volgende maand, maandindieners tegen de 20e. Geen omzet is geen vrijstelling van aangifte: nihil blijft verplicht zolang je niet in de vrijstellingsregeling zit. Die regeling kan tot 25.000 euro jaaromzet. Je rekent dan geen btw aan, dient geen periodieke aangifte in, en trekt ook geen btw af. De klantenlisting volgt op 31 maart, ook als ze leeg is. Bewaar btw-stukken tien jaar.",
+    body: "IT-diensten in België zijn in de regel 21%. Kwartaalindieners dienen in tegen de 25e van de volgende maand, maandindieners tegen de 20e. Geen omzet is geen vrijstelling van aangifte: nihil blijft verplicht zolang je niet in de vrijstellingsregeling zit. Die regeling kan tot 25.000 euro jaaromzet (2026; 26.000 euro vanaf 2027, met 10% tolerantie). Je rekent dan geen btw aan, dient geen periodieke aangifte in, en trekt ook geen btw af. Op de factuur staat dan “Bijzondere vrijstellingsregeling van belasting”. De klantenlisting (en onder de vrijstellingsregeling de totale omzet) volgt op 31 maart, ook als ze leeg is. Bewaar btw-stukken zeven jaar (art. 60 W.Btw).",
   },
   {
     title: "Eenmanszaak",

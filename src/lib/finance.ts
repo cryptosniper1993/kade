@@ -1,5 +1,5 @@
-import { accountKind, accountName } from "./accounts";
-import { round2 } from "./money";
+import { accountKind, accountName } from "./accounts.ts";
+import { round2 } from "./money.ts";
 import type { Company, Invoice, InvoiceLine, Journal } from "./types";
 
 export type Totals = { ex: number; vat: number; incl: number };
