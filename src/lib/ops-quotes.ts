@@ -141,9 +141,8 @@ export const convertQuoteToInvoice = createServerFn({ method: "POST" })
         if (Number.isFinite(days) && days > 0) payDays = days;
       }
       const draft = invoiceDraftFromQuote(quote, brusselsToday(), payDays);
-      const countRows = await sql<{ n: number }>`select count(*)::int as n from invoices where user_id = ${userId}`;
-      const seq = (countRows[0]?.n ?? 0) + 1;
-      const number = `K-${draft.issueDate.slice(0, 4)}-${String(seq).padStart(3, "0")}`;
+      // Concepten krijgen pas bij uitreiken een definitief nummer (KB nr. 1: opeenvolgende reeks zonder gaten).
+      const number = "";
       const invoiceId = uid();
       await sql`
         insert into invoices (

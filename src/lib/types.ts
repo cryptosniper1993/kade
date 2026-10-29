@@ -5,7 +5,8 @@ export type ActivityStatus = "hoofdberoep" | "bijberoep";
 
 export type Company = {
   name: string;
-  legalForm: LegalForm;
+  /** Leeg tot de gebruiker bij de onboarding een rechtsvorm kiest. */
+  legalForm: LegalForm | "";
   vatNumber: string;
   enterpriseNumber: string;
   address: string;
@@ -15,6 +16,8 @@ export type Company = {
   vatRegime: VatRegime;
   activityStatus: ActivityStatus;
   yearEndMonth: number;
+  /** Eigen omzetdrempel voor de vrijstellingsregeling; null = wettelijke drempel van het jaar. */
+  exemptThreshold?: number | null;
 };
 
 export type Party = {
@@ -63,6 +66,12 @@ export type Invoice = {
   demo: boolean;
   peppolStatus: PeppolStatus;
   peppolMessage: string;
+  kind?: "invoice" | "credit";
+  creditOf?: string | null;
+  vatTreatment?: "standard" | "verlegd" | "ic_levering" | "ic_dienst";
+  b2c?: boolean;
+  ogm?: string;
+  peppolSkipped?: string;
 };
 
 export type PeppolStatus = "concept" | "verzonden" | "fout";

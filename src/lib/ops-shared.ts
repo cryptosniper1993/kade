@@ -129,7 +129,7 @@ export function mapCompany(row: Record<string, unknown> | undefined): Company | 
   const regime = str(row.vat_regime, 20);
   return {
     name: str(row.name, 160),
-    legalForm: (["bv", "eenmanszaak", "vof", "commv"].includes(form) ? form : "bv") as LegalForm,
+    legalForm: (["bv", "eenmanszaak", "vof", "commv"].includes(form) ? form : "") as LegalForm | "",
     vatNumber: str(row.vat_number, 32),
     enterpriseNumber: str(row.enterprise_number, 32),
     address: str(row.address, 180),
@@ -138,6 +138,7 @@ export function mapCompany(row: Record<string, unknown> | undefined): Company | 
     iban: str(row.iban, 40),
     vatRegime: (["quarterly", "monthly", "exempt"].includes(regime) ? regime : "quarterly") as VatRegime,
     activityStatus: str(row.activity_status, 20) === "hoofdberoep" ? "hoofdberoep" : "bijberoep",
+    exemptThreshold: row.exempt_threshold != null && Number(row.exempt_threshold) > 0 ? Number(row.exempt_threshold) : null,
     yearEndMonth: Math.min(12, Math.max(1, Number(row.year_end_month) || 12)),
   };
 }

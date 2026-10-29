@@ -2,7 +2,8 @@
  * Peppol BIS Billing 3.0 (UBL 2.1) voor Belgische facturen.
  * Puur: geen netwerk, geen database. Getest in peppol.test.ts.
  */
-import type { Company, Invoice, InvoiceLine } from "@/lib/types";
+import type { Company, Invoice, InvoiceLine } from "./types";
+import { EXEMPT_MENTION, lineCategory, type InvoiceKind, type VatCategory, type VatTreatment } from "./invoicing.ts";
 
 export const CUSTOMIZATION_ID = "urn:cen.eu:en16931:2017#compliant#urn:fdc:peppol.eu:2017:poacc:billing:3.0";
 export const PROFILE_ID = "urn:fdc:peppol.eu:2017:poacc:billing:01:1.0";
@@ -56,6 +57,11 @@ export type PeppolInput = {
   iban: string;
   paymentReference: string;
   exempt: boolean;
+  /** Standaard "invoice" (380). "credit" geeft een UBL CreditNote (381). */
+  kind?: InvoiceKind;
+  /** Nummer van de oorspronkelijke factuur bij een creditnota. */
+  creditOf?: string;
+  treatment?: VatTreatment;
 };
 
 /** Zaakfiche -> Peppol-partij. Haalt een postcode van 4 cijfers uit de gemeente als die erin staat. */
@@ -84,22 +90,22 @@ function esc(s: string): string {
   return String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&apos;");
 }
 
-type Cat = { id: "S" | "Z" | "E"; percent: number };
-function category(line: InvoiceLine, exempt: boolean): Cat {
-  if (exempt) return { id: "E", percent: 0 };
-  return line.vatRate > 0 ? { id: "S", percent: line.vatRate } : { id: "Z", percent: 0 };
+type Cat = VatCategory;
+function category(line: InvoiceLine, exempt: boolean, treatment: VatTreatment = "standard"): Cat {
+  return lineCategory(line.vatRate, treatment, exempt);
 }
 
-export const EXEMPT_REASON = "Bijzondere vrijstellingsregeling kleine ondernemingen (art. 56bis W.Btw)";
+/** KB nr. 1 art. 5 §1 10°quater (sinds 1/1/2025). */
+export const EXEMPT_REASON = EXEMPT_MENTION;
 
 /** Bedragen zoals ze in de UBL komen (EN 16931-regels: som van afgeronde lijnen). */
-export function peppolTotals(lines: InvoiceLine[], exempt: boolean) {
+export function peppolTotals(lines: InvoiceLine[], exempt: boolean, treatment: VatTreatment = "standard") {
   const groups = new Map<string, { cat: Cat; base: number }>();
   let net = 0;
   for (const line of lines) {
     const ext = r2(line.qty * line.unitExVat);
     net = r2(net + ext);
-    const cat = category(line, exempt);
+    const cat = category(line, exempt, treatment);
     const key = `${cat.id}:${cat.percent}`;
     const g = groups.get(key) ?? { cat, base: 0 };
     g.base = r2(g.base + ext);
@@ -119,6 +125,9 @@ export function peppolProblems(input: PeppolInput): string[] {
   if (!parsePeppolId(input.buyer.peppolId)) out.push("De klant heeft geen geldig Peppol-ID (bv. 0208:0123456789).");
   if (!input.invoice.lines.length) out.push("De factuur heeft geen lijnen.");
   if (!input.seller.city || !input.buyer.city) out.push("Gemeente van verkoper en klant zijn verplicht.");
+  const t = input.treatment ?? "standard";
+  if (!input.exempt && t !== "standard" && !input.buyer.vatNumber) out.push("Verlegging of intracommunautair vraagt het btw-nummer van de klant.");
+  if (input.kind === "credit" && !input.creditOf) out.push("Een creditnota verwijst naar de oorspronkelijke factuur.");
   return out;
 }
 
@@ -147,44 +156,57 @@ function party(tag: "AccountingSupplierParty" | "AccountingCustomerParty", p: Pe
 function taxCategory(tag: "TaxCategory" | "ClassifiedTaxCategory", cat: Cat): string {
   return [
     `<cac:${tag}><cbc:ID>${cat.id}</cbc:ID><cbc:Percent>${cat.percent}</cbc:Percent>`,
-    tag === "TaxCategory" && cat.id === "E" ? `<cbc:TaxExemptionReason>${esc(EXEMPT_REASON)}</cbc:TaxExemptionReason>` : "",
+    tag === "TaxCategory" && cat.reason ? `<cbc:TaxExemptionReason>${esc(cat.reason)}</cbc:TaxExemptionReason>` : "",
     `<cac:TaxScheme><cbc:ID>VAT</cbc:ID></cac:TaxScheme></cac:${tag}>`,
   ].join("");
 }
 
-/** Bouwt een Peppol BIS Billing 3.0 UBL-factuur (type 380, EUR). */
+/** Bouwt een Peppol BIS Billing 3.0 UBL-factuur (380) of -creditnota (381), EUR. */
 export function buildPeppolUbl(input: PeppolInput): string {
   const { invoice, seller, buyer, exempt } = input;
-  const t = peppolTotals(invoice.lines, exempt);
+  const treatment = input.treatment ?? "standard";
+  const credit = input.kind === "credit";
+  const root = credit ? "CreditNote" : "Invoice";
+  const lineTag = credit ? "CreditNoteLine" : "InvoiceLine";
+  const qtyTag = credit ? "CreditedQuantity" : "InvoicedQuantity";
+  const t = peppolTotals(invoice.lines, exempt, treatment);
   const iban = String(input.iban || "").replace(/\s+/g, "").toUpperCase();
   const lines = invoice.lines.map((line, i) => {
-    const cat = category(line, exempt);
+    const cat = category(line, exempt, treatment);
     return [
-      `<cac:InvoiceLine><cbc:ID>${i + 1}</cbc:ID>`,
-      `<cbc:InvoicedQuantity unitCode="C62">${line.qty}</cbc:InvoicedQuantity>`,
+      `<cac:${lineTag}><cbc:ID>${i + 1}</cbc:ID>`,
+      `<cbc:${qtyTag} unitCode="C62">${line.qty}</cbc:${qtyTag}>`,
       `<cbc:LineExtensionAmount currencyID="EUR">${amt(line.qty * line.unitExVat)}</cbc:LineExtensionAmount>`,
       `<cac:Item><cbc:Name>${esc(line.description.slice(0, 200))}</cbc:Name>${taxCategory("ClassifiedTaxCategory", cat)}</cac:Item>`,
       `<cac:Price><cbc:PriceAmount currencyID="EUR">${price(line.unitExVat)}</cbc:PriceAmount></cac:Price>`,
-      `</cac:InvoiceLine>`,
+      `</cac:${lineTag}>`,
     ].join("");
   });
+  const intra = !exempt && (treatment === "ic_levering" || treatment === "ic_dienst");
   return [
     `<?xml version="1.0" encoding="UTF-8"?>`,
-    `<Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2" xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2" xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2">`,
+    `<${root} xmlns="urn:oasis:names:specification:ubl:schema:xsd:${root}-2" xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2" xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2">`,
     `<cbc:CustomizationID>${CUSTOMIZATION_ID}</cbc:CustomizationID>`,
     `<cbc:ProfileID>${PROFILE_ID}</cbc:ProfileID>`,
     `<cbc:ID>${esc(invoice.number)}</cbc:ID>`,
     `<cbc:IssueDate>${esc(invoice.issueDate)}</cbc:IssueDate>`,
-    invoice.dueDate ? `<cbc:DueDate>${esc(invoice.dueDate)}</cbc:DueDate>` : "",
-    `<cbc:InvoiceTypeCode>380</cbc:InvoiceTypeCode>`,
+    !credit && invoice.dueDate ? `<cbc:DueDate>${esc(invoice.dueDate)}</cbc:DueDate>` : "",
+    credit ? `<cbc:CreditNoteTypeCode>381</cbc:CreditNoteTypeCode>` : `<cbc:InvoiceTypeCode>380</cbc:InvoiceTypeCode>`,
     invoice.notes ? `<cbc:Note>${esc(invoice.notes)}</cbc:Note>` : "",
     `<cbc:DocumentCurrencyCode>EUR</cbc:DocumentCurrencyCode>`,
     `<cbc:BuyerReference>${esc(invoice.number)}</cbc:BuyerReference>`,
+    credit && input.creditOf
+      ? `<cac:BillingReference><cac:InvoiceDocumentReference><cbc:ID>${esc(input.creditOf)}</cbc:ID></cac:InvoiceDocumentReference></cac:BillingReference>`
+      : "",
     party("AccountingSupplierParty", seller),
     party("AccountingCustomerParty", buyer),
+    intra
+      ? `<cac:Delivery><cbc:ActualDeliveryDate>${esc(invoice.issueDate)}</cbc:ActualDeliveryDate><cac:DeliveryLocation><cac:Address><cac:Country><cbc:IdentificationCode>${esc(buyer.countryCode || "BE")}</cbc:IdentificationCode></cac:Country></cac:Address></cac:DeliveryLocation></cac:Delivery>`
+      : "",
     iban
       ? `<cac:PaymentMeans><cbc:PaymentMeansCode>30</cbc:PaymentMeansCode>${input.paymentReference ? `<cbc:PaymentID>${esc(input.paymentReference)}</cbc:PaymentID>` : ""}<cac:PayeeFinancialAccount><cbc:ID>${esc(iban)}</cbc:ID></cac:PayeeFinancialAccount></cac:PaymentMeans>`
       : "",
+    credit && invoice.dueDate ? `<cac:PaymentTerms><cbc:Note>Te verrekenen of terug te betalen tegen ${esc(invoice.dueDate)}.</cbc:Note></cac:PaymentTerms>` : "",
     `<cac:TaxTotal><cbc:TaxAmount currencyID="EUR">${amt(t.tax)}</cbc:TaxAmount>`,
     ...t.subtotals.map(
       (g) =>
@@ -198,6 +220,6 @@ export function buildPeppolUbl(input: PeppolInput): string {
     `<cbc:PayableAmount currencyID="EUR">${amt(t.gross)}</cbc:PayableAmount>`,
     `</cac:LegalMonetaryTotal>`,
     ...lines,
-    `</Invoice>`,
+    `</${root}>`,
   ].join("\n");
 }

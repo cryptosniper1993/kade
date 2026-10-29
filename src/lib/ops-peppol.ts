@@ -9,7 +9,7 @@ import { authMiddleware } from "@/lib/auth/middleware";
 import { asLines, db, mapCompany, mapParty, str } from "@/lib/ops-shared";
 import { env } from "@/lib/env.server";
 import { adapter, NOT_CONNECTED } from "@/lib/peppol-adapter.server";
-import { ogmFromSequence } from "@/lib/finance";
+import { asTreatment } from "@/lib/invoicing";
 import { buildPeppolUbl, countryCode, parsePeppolId, peppolIdFromKbo, peppolProblems, sellerFromCompany } from "@/lib/peppol";
 import type { PeppolInput } from "@/lib/peppol";
 
@@ -56,7 +56,8 @@ async function buildFor(userId: string, id: string): Promise<{ input: PeppolInpu
   const sql = await db();
   const rows = await sql<Record<string, unknown>>`
     select id, number, client_id, client_name, client_vat, client_address, issue_date::text as issue_date,
-           due_date::text as due_date, notes, lines from invoices where id = ${id} and user_id = ${userId}`;
+           due_date::text as due_date, notes, lines, kind, credit_of, vat_treatment, ogm
+    from invoices where id = ${id} and user_id = ${userId}`;
   const row = rows[0];
   if (!row) throw new Error("Factuur niet gevonden.");
   const companies = await sql<Record<string, unknown>>`select * from companies where user_id = ${userId}`;
@@ -68,6 +69,11 @@ async function buildFor(userId: string, id: string): Promise<{ input: PeppolInpu
   const client = clientRows[0] ? mapParty(clientRows[0]) : null;
   const vat = client?.vatNumber || str(row.client_vat, 32);
   const number = str(row.number, 40);
+  const kind = str(row.kind, 10) === "credit" ? ("credit" as const) : ("invoice" as const);
+  const of = kind === "credit" && row.credit_of
+    ? await sql<{ number: string }>`select number from invoices where id = ${str(row.credit_of, 80)} and user_id = ${userId}`
+    : [];
+  const creditOf = of[0]?.number ?? "";
   const input: PeppolInput = {
     invoice: {
       number,
@@ -87,8 +93,11 @@ async function buildFor(userId: string, id: string): Promise<{ input: PeppolInpu
       countryCode: countryCode(client?.country || ""),
     },
     iban: company.iban,
-    paymentReference: ogmFromSequence(Number(number.replace(/\D/g, "")) || 1),
+    paymentReference: str(row.ogm, 30),
     exempt: company.vatRegime === "exempt",
+    kind,
+    creditOf,
+    treatment: asTreatment(row.vat_treatment),
   };
   return { input, xml: buildPeppolUbl(input), number };
 }

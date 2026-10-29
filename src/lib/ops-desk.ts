@@ -1,3 +1,4 @@
+import { asTreatment } from "@/lib/invoicing";
 import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
 import {
@@ -69,8 +70,9 @@ export const loadDesk = createServerFn({ method: "GET" })
       from suppliers where user_id = ${userId} order by name asc`;
     const invoices = await sql<Record<string, unknown>>`
       select id, number, client_id, client_name, client_vat, client_address,
-             issue_date::text as issue_date, due_date::text as due_date, status, notes, lines, demo, peppol_status, peppol_message
-      from invoices where user_id = ${userId} order by issue_date desc, number desc`;
+             issue_date::text as issue_date, due_date::text as due_date, status, notes, lines, demo, peppol_status, peppol_message,
+             kind, credit_of, vat_treatment, b2c, ogm, peppol_skipped
+      from invoices where user_id = ${userId} order by (status = 'draft') desc, issue_date desc, number desc`;
     const documents = await sql<Record<string, unknown>>`
       select id, filename, mime, kind, vendor, doc_date::text as doc_date, amount_eur, note, demo,
              created_at::text as created_at, client_id, supplier_id
@@ -115,6 +117,12 @@ export const loadDesk = createServerFn({ method: "GET" })
         demo: Boolean(row.demo),
         peppolStatus: (["verzonden", "fout"].includes(str(row.peppol_status, 12)) ? str(row.peppol_status, 12) : "concept") as Invoice["peppolStatus"],
         peppolMessage: str(row.peppol_message, 400),
+        kind: str(row.kind, 10) === "credit" ? ("credit" as const) : ("invoice" as const),
+        creditOf: row.credit_of ? str(row.credit_of, 80) : null,
+        vatTreatment: asTreatment(row.vat_treatment),
+        b2c: Boolean(row.b2c),
+        ogm: str(row.ogm, 30),
+        peppolSkipped: str(row.peppol_skipped, 200),
       })),
       journals,
       documents: documents.map((row) => ({
@@ -176,10 +184,12 @@ function parseCompany(input: unknown): CompanyInput {
   const name = str(row.name, 160);
   if (!name) throw new Error("De zaak heeft een naam nodig.");
   const form = str(row.legalForm, 20);
+  if (!["bv", "eenmanszaak", "vof", "commv"].includes(form)) throw new Error("Kies je rechtsvorm (eenmanszaak, BV, VOF of CommV).");
+  const threshold = Number(row.exemptThreshold);
   const regime = str(row.vatRegime, 20);
   return {
     name,
-    legalForm: (["bv", "eenmanszaak", "vof", "commv"].includes(form) ? form : "bv") as LegalForm,
+    legalForm: (["bv", "eenmanszaak", "vof", "commv"].includes(form) ? form : "") as LegalForm | "",
     vatNumber: str(row.vatNumber, 32),
     enterpriseNumber: str(row.enterpriseNumber, 32),
     address: str(row.address, 180),
@@ -189,6 +199,7 @@ function parseCompany(input: unknown): CompanyInput {
     vatRegime: (["quarterly", "monthly", "exempt"].includes(regime) ? regime : "quarterly") as VatRegime,
     activityStatus: str(row.activityStatus, 20) === "hoofdberoep" ? "hoofdberoep" : "bijberoep",
     yearEndMonth: Math.min(12, Math.max(1, Number(row.yearEndMonth) || 12)),
+    exemptThreshold: row.exemptThreshold != null && Number.isFinite(threshold) && threshold > 0 ? Math.round(threshold * 100) / 100 : null,
   };
 }
 
@@ -199,14 +210,15 @@ export const saveCompany = createServerFn({ method: "POST" })
     const sql = await db();
     await sql`
       insert into companies (
-        user_id, name, legal_form, vat_number, enterprise_number, address, city, email, iban, vat_regime, activity_status, year_end_month
+        user_id, name, legal_form, vat_number, enterprise_number, address, city, email, iban, vat_regime, activity_status, year_end_month, exempt_threshold
       ) values (
         ${context.userId}, ${data.name}, ${data.legalForm}, ${data.vatNumber}, ${data.enterpriseNumber},
-        ${data.address}, ${data.city}, ${data.email}, ${data.iban}, ${data.vatRegime}, ${data.activityStatus}, ${data.yearEndMonth}
+        ${data.address}, ${data.city}, ${data.email}, ${data.iban}, ${data.vatRegime}, ${data.activityStatus}, ${data.yearEndMonth}, ${data.exemptThreshold ?? null}
       )
       on conflict (user_id) do update set
         name = excluded.name,
         legal_form = excluded.legal_form,
+        exempt_threshold = excluded.exempt_threshold,
         vat_number = excluded.vat_number,
         enterprise_number = excluded.enterprise_number,
         address = excluded.address,

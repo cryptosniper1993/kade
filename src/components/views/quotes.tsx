@@ -142,7 +142,7 @@ export function QuotesView({
       await reload();
       await refresh();
       sessionStorage.setItem("kade-invoice", result.invoiceId);
-      notice(`Conceptfactuur ${result.number} gemaakt uit ${quote.number}.`);
+      notice(`Conceptfactuur gemaakt uit ${quote.number}. Het factuurnummer volgt bij uitreiken.`);
       go("facturen");
     } catch (error) {
       notice(error instanceof Error ? error.message : "Omzetten mislukt.");
@@ -153,7 +153,8 @@ export function QuotesView({
   }
 
   function invoiceNumber(id: string | null) {
-    return desk.invoices.find((invoice) => invoice.id === id)?.number ?? "";
+    const inv = desk.invoices.find((invoice) => invoice.id === id);
+    return inv ? inv.number || "concept" : "";
   }
 
   return (

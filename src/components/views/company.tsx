@@ -5,7 +5,7 @@ import { Button, Field, Kicker, Panel, Select, TextInput } from "@/components/ui
 
 const empty: Company = {
   name: "",
-  legalForm: "eenmanszaak",
+  legalForm: "",
   vatNumber: "",
   enterpriseNumber: "",
   address: "",
@@ -15,6 +15,7 @@ const empty: Company = {
   vatRegime: "quarterly",
   activityStatus: "bijberoep",
   yearEndMonth: 12,
+  exemptThreshold: null,
 };
 
 export function CompanyView({ desk, refresh, notice }: { desk: Desk; refresh: () => Promise<void>; notice: (m: string) => void }) {
@@ -65,6 +66,7 @@ export function CompanyView({ desk, refresh, notice }: { desk: Desk; refresh: ()
         </Field>
         <Field label="Rechtsvorm">
           <Select value={form.legalForm} onChange={(e) => set("legalForm", e.target.value as Company["legalForm"])}>
+            <option value="" disabled>Kies je rechtsvorm…</option>
             <option value="bv">BV</option>
             <option value="eenmanszaak">Eenmanszaak</option>
             <option value="vof">VOF</option>
@@ -96,6 +98,16 @@ export function CompanyView({ desk, refresh, notice }: { desk: Desk; refresh: ()
             <option value="exempt">Vrijstellingsregeling kleine ondernemingen (art. 56bis)</option>
           </Select>
         </Field>
+        {form.vatRegime === "exempt" && (
+          <Field label="Eigen omzetdrempel (leeg = wettelijke drempel van het jaar)">
+            <TextInput
+              inputMode="decimal"
+              value={form.exemptThreshold == null ? "" : String(form.exemptThreshold)}
+              onChange={(e) => set("exemptThreshold", e.target.value.trim() ? Number(e.target.value.replace(",", ".")) || null : null)}
+              placeholder="25000"
+            />
+          </Field>
+        )}
         <Field label="Sociaal statuut">
           <Select value={form.activityStatus} onChange={(e) => set("activityStatus", e.target.value as Company["activityStatus"])}>
             <option value="bijberoep">Zelfstandige in bijberoep</option>

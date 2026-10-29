@@ -84,3 +84,9 @@ Na een aanpassing: `npx tsc --noEmit`, `npm test`, en test opnieuw stap 5.
 ## 7. Zonder API-koppeling
 
 Krijg je facturen binnen in een portaal of boekhoudapp? Download de **UBL XML** en gebruik in **Finance → Inkomend** de knop **UBL XML opladen** (meerdere bestanden tegelijk kan). Dezelfde factuur twee keer opladen maakt geen dubbel: Kade herkent leverancier + factuurnummer.
+
+## Documenttypes die Kade verstuurt
+
+- **Factuur**: UBL *Invoice* (Peppol BIS Billing 3.0, type 380), met de bij uitreiken vastgelegde OGM als betalingsreferentie.
+- **Creditnota**: UBL *CreditNote* (type 381) met `BillingReference` naar het oorspronkelijke factuurnummer.
+- Btw-categorieën: **S** (Belgische btw), **Z** (0%), **E** (vrijstellingsregeling), **AE** (verlegging), **K** (intracommunautair, met leverdatum en land). Bij E, AE en K staat de wettelijke vermelding als `TaxExemptionReason`.
