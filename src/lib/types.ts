@@ -239,3 +239,4 @@ export type Desk = {
   incidents: Incident[];
   briefing: BriefingNote | null;
 };
+
