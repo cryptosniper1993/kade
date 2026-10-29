@@ -18,7 +18,12 @@ import { dirname, join } from "node:path";
 import pg from "pg";
 import { pendingMigrations } from "./migration-plan.mjs";
 
-const databaseUrl = process.env.DATABASE_URL;
+// Migraties liefst over de directe (niet-pooled) Neon-URL; valt terug op DATABASE_URL.
+const databaseUrl =
+  process.env.DATABASE_URL_UNPOOLED ||
+  process.env.NETLIFY_DATABASE_URL_UNPOOLED ||
+  process.env.DATABASE_URL ||
+  process.env.NETLIFY_DATABASE_URL;
 if (!databaseUrl) {
   console.log(
     "[migrate] DATABASE_URL not set — skipping (the PGLite fallback migrates itself).",

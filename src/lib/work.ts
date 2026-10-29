@@ -1,3 +1,4 @@
+import { callGrok, type GrokResult } from "@/lib/grok-client";
 import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { brusselsToday } from "@/lib/day";
@@ -74,6 +75,11 @@ function mapProject(row: Record<string, unknown>): Project {
     note: str(row.note, 800),
     dueOn: row.due_on ? str(row.due_on, 10) : null,
     createdAt: str(row.created_at, 40),
+    botId: str(row.bot_id, 80),
+    confidential: Boolean(row.confidential),
+    phase: str(row.phase, 30),
+    contacts: str(row.contacts, 1000),
+    nextAction: str(row.next_action, 400),
   };
 }
 
@@ -104,7 +110,8 @@ export async function readWork(sql: Sql, userId: string): Promise<{
   const people = await sql<Record<string, unknown>>`
     select id, name, role, active from people where user_id = ${userId} order by name asc`;
   const projects = await sql<Record<string, unknown>>`
-    select id, name, client_name, status, note, due_on::text as due_on, created_at::text as created_at
+    select id, name, client_name, status, note, due_on::text as due_on, created_at::text as created_at,
+           bot_id, confidential, phase, contacts, next_action
     from projects where user_id = ${userId} order by created_at desc`;
   const tasks = await sql<Record<string, unknown>>`
     select id, project_id, assignee_id, title, detail, kind, cause, priority, status,
@@ -299,27 +306,9 @@ export const deleteTask = createServerFn({ method: "POST" })
     return { ok: true as const };
   });
 
-async function grok(system: string, user: string): Promise<{ ok: true; text: string } | { ok: false; error: string }> {
-  const apiKey = process.env.XAI_API_KEY;
-  if (!apiKey) return { ok: false, error: "Loots heeft nu geen lijn naar Grok. De lijst hierboven klopt wel." };
-  const res = await fetch("https://api.x.ai/v1/chat/completions", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-    body: JSON.stringify({
-      model: "grok-4.5",
-      max_tokens: 420,
-      temperature: 0.3,
-      messages: [
-        { role: "system", content: system },
-        { role: "user", content: user.slice(0, 8000) },
-      ],
-    }),
-  });
-  if (!res.ok) return { ok: false, error: `Grok antwoordde niet (${res.status}). Probeer opnieuw.` };
-  const body = (await res.json()) as { choices?: { message?: { content?: string } }[] };
-  const text = body.choices?.[0]?.message?.content?.trim() ?? "";
-  if (!text) return { ok: false, error: "Grok gaf een leeg antwoord." };
-  return { ok: true, text: text.slice(0, 4000) };
+async function grok(system: string, user: string): Promise<GrokResult> {
+  const r = await callGrok(system, user, { maxTokens: 420, temperature: 0.3, maxInput: 8000, noKey: "Loots heeft nu geen lijn naar Grok. De lijst hierboven klopt wel." });
+  return r.ok ? { ok: true, text: r.text.slice(0, 4000) } : r;
 }
 
 const BRIEF_SYSTEM = `Je bent Loots, stuurman van KADE. Toon: droog, precies, licht sarcastisch, nooit onderdanig. Nederlands uit Vlaanderen.

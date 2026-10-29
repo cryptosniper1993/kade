@@ -1,6 +1,6 @@
 # Projectbeheer
 
-Twee schermen: **Taken** en **Projecten**.
+Vier schermen: **Taken**, **Projecten**, **Prospectie** ([prospectie.md](prospectie.md)) en **Goedkeuring** ([goedkeuring.md](goedkeuring.md)).
 
 ## Taken
 
@@ -59,3 +59,7 @@ Twee schermen: **Taken** en **Projecten**.
 | | Deadline, Notitie | optioneel |
 | | Knop | **Toevoegen** |
 | Per taak | Status, Toewijzen, verwijderen | zoals bij Taken |
+
+### Projectfiche (JustAMinute)
+
+Per project: **Fase** (lead, kennismaking_gepland, analyse, offerte_concept, offerte_verzonden, getekend, in_uitvoering, live, onderhoud), **Vertrouwelijk** (nooit zichtbaar voor andere bots), **Contacten**, **Volgende actie**, **Klant** en de gekoppelde **projectbot** → **Bewaren**.

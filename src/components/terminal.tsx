@@ -4,6 +4,10 @@ import {
   AudioLines,
   BookOpen,
   Bot,
+  BotMessageSquare,
+  CheckCheck,
+  History,
+  Target,
   Boxes,
   Building2,
   ChartColumn,
@@ -23,6 +27,7 @@ import {
   Truck,
   Users,
   type LucideIcon,
+  ListChecks,
 } from "lucide-react";
 import { authEnabled, signOut } from "@/lib/auth/client";
 import { hasGateSessionMarker } from "@/lib/auth/gate-session-marker";
@@ -52,6 +57,11 @@ import { QuotesView } from "@/components/views/quotes";
 import { ResearchView } from "@/components/views/research";
 import { SettingsView } from "@/components/views/settings";
 import { TasksView } from "@/components/views/tasks";
+import { GrokBotsView } from "@/components/views/grok-bots";
+import { ProspectsView } from "@/components/views/prospects";
+import { ApprovalsView } from "@/components/views/approvals";
+import { AuditView } from "@/components/views/audit";
+import { SetupView } from "@/components/views/setup";
 
 const GROUPS: { id: string; label: string; items: { id: string; label: string; icon: LucideIcon }[] }[] = [
   { id: "brug", label: "Brug", items: [{ id: "brug", label: "Brug", icon: Ship }] },
@@ -61,6 +71,8 @@ const GROUPS: { id: string; label: string; items: { id: string; label: string; i
     items: [
       { id: "taken", label: "Taken", icon: ListTodo },
       { id: "projecten", label: "Projecten", icon: FolderKanban },
+      { id: "prospectie", label: "Prospectie", icon: Target },
+      { id: "goedkeuring", label: "Goedkeuring", icon: CheckCheck },
     ],
   },
   {
@@ -92,12 +104,15 @@ const GROUPS: { id: string; label: string; items: { id: string; label: string; i
       { id: "post", label: "Post", icon: Mail },
     ],
   },
+  { id: "grokbots", label: "GROK BOTS", items: [{ id: "grokbots", label: "Grok Bots", icon: BotMessageSquare }] },
   {
     id: "beheer",
     label: "Beheer",
     items: [
+      { id: "setup", label: "Setup", icon: ListChecks },
       { id: "zaak", label: "Zaak", icon: Building2 },
       { id: "instellingen", label: "Instellingen", icon: Settings },
+      { id: "audit", label: "Audit", icon: History },
     ],
   },
 ];
@@ -129,6 +144,11 @@ export function Terminal({ user }: { user: AppUser }) {
   useEffect(() => {
     const hash = window.location.hash.replace("#", "");
     if (IDS.has(hash)) setView(hash);
+    const onHash = () => {
+      const next = window.location.hash.replace("#", "");
+      if (IDS.has(next)) setView(next);
+    };
+    window.addEventListener("hashchange", onHash);
     refresh().catch((err: unknown) => setError(err instanceof Error ? err.message : "De terminal kon de boeken niet openen."));
   }, []);
 
@@ -155,6 +175,10 @@ export function Terminal({ user }: { user: AppUser }) {
     const next = GROUPS.find((group) => group.id === id)?.items[0]?.id;
     if (next) go(next);
   }
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = desk?.theme ?? "kade";
+  }, [desk?.theme]);
 
   useEffect(() => {
     const brand = desk?.brand || "KADE";
@@ -280,7 +304,12 @@ export function Terminal({ user }: { user: AppUser }) {
             {desk && view === "archief" && <ArchiveView desk={desk} refresh={refresh} notice={ping} />}
             {desk && view === "post" && <MailView />}
             {desk && view === "zaak" && <CompanyView desk={desk} refresh={refresh} notice={ping} />}
-            {desk && view === "instellingen" && <SettingsView desk={desk} refresh={refresh} notice={ping} />}
+            {desk && view === "instellingen" && <SettingsView desk={desk} refresh={refresh} notice={ping} go={go} />}
+            {desk && view === "grokbots" && <GrokBotsView desk={desk} notice={ping} />}
+            {desk && view === "prospectie" && <ProspectsView refresh={refresh} notice={ping} go={go} />}
+            {desk && view === "goedkeuring" && <ApprovalsView notice={ping} />}
+            {desk && view === "audit" && <AuditView />}
+            {desk && view === "setup" && <SetupView desk={desk} notice={ping} go={go} />}
           </main>
         </div>
       </div>

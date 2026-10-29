@@ -161,6 +161,12 @@ export type Project = {
   note: string;
   dueOn: string | null;
   createdAt: string;
+  /** JustAMinute-velden (dossier §7). */
+  botId: string;
+  confidential: boolean;
+  phase: string;
+  contacts: string;
+  nextAction: string;
 };
 
 export type TaskKind = "todo" | "cip";
@@ -249,6 +255,7 @@ export type Desk = {
   hoofd: AgentMessage[];
   runs: BotRun[];
   brand: string;
+  theme: "kade" | "justaminute";
   voice: VoiceSettings;
   people: Person[];
   projects: Project[];

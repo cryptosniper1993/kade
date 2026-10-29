@@ -18,6 +18,18 @@
   --radius-lg: 1.25rem;
 }
 
+/* JustAMinute-huisstijl: navy #104176, coral #E33737 (Beheer > Instellingen > Thema). */
+[data-theme="justaminute"] {
+  --color-ink: #0a2744;
+  --color-panel: #0e3359;
+  --color-raised: #104176;
+  --color-line: #24578d;
+  --color-ivory: #f5f7fa;
+  --color-mist: #a9bdd3;
+  --color-brass: #e33737;
+  --color-brass-ink: #ffffff;
+}
+
 @layer base {
   html {
     -webkit-font-smoothing: antialiased;

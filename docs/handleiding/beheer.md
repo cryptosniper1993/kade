@@ -1,6 +1,10 @@
 # Beheer
 
-Schermen: **Zaak** en **Instellingen**.
+Schermen: **Setup**, **Zaak**, **Instellingen** en **Audit**.
+
+## Setup
+
+Alle configuratie en status op één pagina: zie [setup.md](setup.md).
 
 ## Zaak
 
@@ -52,21 +56,35 @@ Knoppen: **Stem bewaren**, **Test** (laat de stem een testzin zeggen), **Stop**.
 
 Toont je **Eigen Peppol-ID** (uit de zaakfiche), de **Provider** en de **Status** (*niet verbonden*, *ingesteld, nog niet getest*, *verbonden*). Knop **Test verbinding**. De koppeling zelf gebeurt met server-variabelen: zie [peppol-provider.md](peppol-provider.md).
 
-### Grok Bot
+### Mailverbinding
 
-Koppeling waarmee Kade opdrachten naar Grok Bot stuurt (via een webhook-routine van Grok Bot).
+Provider, afzender, Verbinden/Verbreek, Test verbinding en log van verzonden mails: zie [mail.md](mail.md).
 
-| Veld / knop | Uitleg |
+### Thema
+
+**Kleuren**: **KADE (messing)** of **JustAMinute (navy #104176, coral #E33737)**.
+
+### Prospectie en verzendregels
+
+| Veld | Uitleg |
 | --- | --- |
-| Webhook-URL | URL van de routine "Opdrachten uit Kade" |
-| Sender key | geheime sleutel van de webhook; na bewaren alleen gemaskeerd getoond, leeg laten om te behouden |
-| Hoe de sleutel meesturen | **Authorization: Bearer &lt;sleutel&gt;** of **Eigen header** |
-| Headernaam | bij eigen header, bv. `X-Sender-Key` |
-| **Bewaren** | bewaart de koppeling |
-| **Test verbinding** | stuurt een testbericht; status *Niet gekoppeld*, *Gekoppeld, nog niet getest* of het resultaat met tijdstip |
-| **Sleutel wissen** | verwijdert de sleutel |
+| Max per dag | standaard 15 |
+| Venster van / tot | standaard 08:30–11:00, di–do (Brussel) |
+| Verboden namen | één per regel; blokkeert goedkeuring. Vertrouwelijk: staat enkel in de database |
+| Start activiteit | voor de pro-rata vrijstellingsdrempel |
+| Vrijstellingsdrempel | standaard €25.000 (meter op de Brug bij vrijstellingsregeling) |
 
-Daarna kan je opdrachten sturen vanuit Agents → Bots en het resultaat zien in Agents → Logboek → Grok Bot.
+### GROK BOTS
+
+De Grok Bot-koppeling is verhuisd naar het hoofdonderdeel **GROK BOTS**: zie [grok-bots.md](grok-bots.md).
+
+### Inrichting importeren
+
+Plak of kies een JSON (zie [inrichting-voorbeeld.json](inrichting-voorbeeld.json)) met verboden namen, startdatum, klanten, projecten, taken en Grok Bots → **Importeren**. Herhalen maakt niets dubbel. Zo blijven vertrouwelijke gegevens uit de publieke repo.
+
+## Audit
+
+Elke goedkeuring, verzending, import, bot-oproep en instelling met tijd, actor en wie goedkeurde.
 
 ## Aanmelden in productie
 

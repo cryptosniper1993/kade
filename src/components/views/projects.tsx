@@ -6,6 +6,7 @@ import type { Desk, Project, ProjectStatus, TaskPriority } from "@/lib/types";
 import { cn } from "@/lib/cn";
 import { Button, Field, Kicker, Panel, Select, TextInput } from "@/components/ui";
 import { TaskList } from "@/components/views/task-list";
+import { ProjectMeta } from "@/components/views/project-meta";
 
 const STATUSES: { id: ProjectStatus; label: string }[] = [
   { id: "actief", label: "Actief" },
@@ -104,7 +105,7 @@ export function ProjectsView({ desk, refresh, notice }: { desk: Desk; refresh: (
                 onClick={() => setOpenId(project.id)}
                 className={cn("rounded-md border p-4 text-left", on ? "border-brass bg-raised" : "border-line bg-panel")}
               >
-                <p className="text-xs tracking-widest text-mist uppercase">{project.status}</p>
+                <p className="text-xs tracking-widest text-mist uppercase">{project.status}{project.phase ? ` · ${project.phase.replace(/_/g, " ")}` : ""}{project.confidential ? " · vertrouwelijk" : ""}</p>
                 <p className="mt-1 font-display text-3xl">{project.name}</p>
                 <p className="mt-1 text-sm text-mist">
                   {project.clientName || "Geen opdrachtgever"}
@@ -124,6 +125,7 @@ export function ProjectsView({ desk, refresh, notice }: { desk: Desk; refresh: (
 
       {selected && (
         <section className="flex flex-col gap-4">
+          <ProjectMeta project={selected} refresh={refresh} notice={notice} />
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
               <Kicker>Todo van dit project</Kicker>

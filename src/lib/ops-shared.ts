@@ -1,3 +1,4 @@
+import { callGrok, type GrokResult } from "@/lib/grok-client";
 import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { ACCOUNTS, accountName, isKnownAccount } from "@/lib/accounts";
@@ -164,27 +165,8 @@ Als je een fiscale tip geeft, zeg in één korte zin dat je geen erkend boekhoud
 Gebruik alleen de cijfers die je krijgt. Verzin geen omzet, geen klanten, geen wetartikelen die je niet zeker weet.
 Houd het compact. Geen emoji. Geen aanhef als "Tuurlijk!".`;
 
-export async function grok(system: string, user: string, maxTokens: number): Promise<{ ok: true; text: string } | { ok: false; error: string }> {
-  const apiKey = process.env.XAI_API_KEY;
-  if (!apiKey) return { ok: false, error: "Geen lijn naar Grok. De boeken werken wel." };
-  const res = await fetch("https://api.x.ai/v1/chat/completions", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-    body: JSON.stringify({
-      model: "grok-4.5",
-      max_tokens: maxTokens,
-      temperature: 0.4,
-      messages: [
-        { role: "system", content: system },
-        { role: "user", content: user.slice(0, 12000) },
-      ],
-    }),
-  });
-  if (!res.ok) return { ok: false, error: `Grok antwoordde niet (${res.status}). Probeer opnieuw.` };
-  const body = (await res.json()) as { choices?: { message?: { content?: string } }[] };
-  const text = body.choices?.[0]?.message?.content?.trim() ?? "";
-  if (!text) return { ok: false, error: "Grok gaf een leeg antwoord." };
-  return { ok: true, text };
+export async function grok(system: string, user: string, maxTokens: number): Promise<GrokResult> {
+  return callGrok(system, user, { maxTokens });
 }
 
 export async function readJournals(sql: Sql, userId: string): Promise<Journal[]> {

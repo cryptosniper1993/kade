@@ -12,6 +12,8 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as ApiBotSplatRouteImport } from './routes/api/bot/$'
+import { Route as ApiMailCallbackRouteImport } from './routes/api/mail/callback'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -28,35 +30,60 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiBotSplatRoute = ApiBotSplatRouteImport.update({
+  id: '/api/bot/$',
+  path: '/api/bot/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiMailCallbackRoute = ApiMailCallbackRouteImport.update({
+  id: '/api/mail/callback',
+  path: '/api/mail/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/bot/$': typeof ApiBotSplatRoute
+  '/api/mail/callback': typeof ApiMailCallbackRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/bot/$': typeof ApiBotSplatRoute
+  '/api/mail/callback': typeof ApiMailCallbackRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/bot/$': typeof ApiBotSplatRoute
+  '/api/mail/callback': typeof ApiMailCallbackRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/api/auth/$'
+  fullPaths:
+    '/' | '/login' | '/api/auth/$' | '/api/bot/$' | '/api/mail/callback'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/api/auth/$'
-  id: '__root__' | '/' | '/login' | '/api/auth/$'
+  to: '/' | '/login' | '/api/auth/$' | '/api/bot/$' | '/api/mail/callback'
+  id:
+    | '__root__'
+    | '/'
+    | '/login'
+    | '/api/auth/$'
+    | '/api/bot/$'
+    | '/api/mail/callback'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   LoginRoute: typeof LoginRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  ApiBotSplatRoute: typeof ApiBotSplatRoute
+  ApiMailCallbackRoute: typeof ApiMailCallbackRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -82,6 +109,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/bot/$': {
+      id: '/api/bot/$'
+      path: '/api/bot/$'
+      fullPath: '/api/bot/$'
+      preLoaderRoute: typeof ApiBotSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/mail/callback': {
+      id: '/api/mail/callback'
+      path: '/api/mail/callback'
+      fullPath: '/api/mail/callback'
+      preLoaderRoute: typeof ApiMailCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -89,6 +130,8 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   LoginRoute: LoginRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
+  ApiBotSplatRoute: ApiBotSplatRoute,
+  ApiMailCallbackRoute: ApiMailCallbackRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -1,0 +1,10 @@
+# Netlify-deploy van KADE (zie docs/handleiding/hosting-netlify.md).
+# Waarden van geheime variabelen (DATABASE_URL, XAI_API_KEY, ...) zet je in Netlify > Site configuration > Environment variables, nooit hier.
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NITRO_PRESET = "netlify"
+  NODE_VERSION = "22"
+  VITE_AUTH_ENABLED = "true"

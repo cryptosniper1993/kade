@@ -1,0 +1,39 @@
+{
+  "forbiddenNames": [
+    "Voorbeeldklant NV"
+  ],
+  "activityStart": "2026-11-01",
+  "clients": [
+    {
+      "name": "Voorbeeldklant NV",
+      "email": "info@voorbeeld.invalid",
+      "vat": "",
+      "address": "Voorbeeldstraat 1",
+      "city": "1000 Brussel"
+    }
+  ],
+  "projects": [
+    {
+      "name": "Voorbeeldproject",
+      "clientName": "Voorbeeldklant NV",
+      "phase": "analyse",
+      "confidential": true,
+      "nextAction": "Kennismaking plannen",
+      "contacts": "Jan Voorbeeld"
+    }
+  ],
+  "tasks": [
+    {
+      "project": "Voorbeeldproject",
+      "title": "Analyse opstarten"
+    }
+  ],
+  "grokBots": [
+    {
+      "name": "joly jumper",
+      "role": "Head of Sales",
+      "scope": "sales",
+      "grokBotId": "bot-voorbeeld"
+    }
+  ]
+}

@@ -57,7 +57,7 @@ export const loadDesk = createServerFn({ method: "GET" })
       }
     }
     const settings = await sql<Record<string, unknown>>`
-      select brand, agent_name, voice_uri, voice_lang, voice_rate, voice_pitch, voice_volume, auto_speak, send_on_listen
+      select brand, theme, agent_name, voice_uri, voice_lang, voice_rate, voice_pitch, voice_volume, auto_speak, send_on_listen
       from desk_settings where user_id = ${userId}`;
     const companies = await sql<Record<string, unknown>>`select * from companies where user_id = ${userId}`;
     const clients = await sql<Record<string, unknown>>`
@@ -167,6 +167,7 @@ export const loadDesk = createServerFn({ method: "GET" })
         createdAt: str(row.created_at, 40),
       })),
       brand: str(settings[0]?.brand, 24) || "KADE",
+      theme: str(settings[0]?.theme, 16) === "justaminute" ? "justaminute" : "kade",
       voice: mapVoice(settings[0]),
       people: work.people,
       projects: work.projects,

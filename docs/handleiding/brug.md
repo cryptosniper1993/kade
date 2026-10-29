@@ -24,3 +24,7 @@
 | Cijfers boekjaar | **Omzet** (geboekt in dit boekjaar), **Kosten** (zonder btw), **Resultaat** (winst vóór fiscale correcties of verlies), **Bank** (rekening 5500) |
 | Kalender | Fiscale plichten met dagen tot de deadline ("nu", "laat" of "Nd"); link naar **Loots** |
 | Open posten | Openstaande verkoopfacturen; knop **Naar facturen** |
+
+## Vrijstellingsdrempel
+
+Bij de vrijstellingsregeling toont de Brug een meter: omzet dit jaar tegenover de drempel (€25.000, pro rata vanaf de startdatum; bv. ±€4.178 bij start 1/11/2026). Oranje vanaf 80%, rood erover.

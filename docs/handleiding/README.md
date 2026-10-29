@@ -5,13 +5,20 @@ KADE is de zaakterminal voor een Belgische IT-zaak (btw-nummer, ook in bijberoep
 | Hoofdonderdeel | Schermen | Handleiding |
 | --- | --- | --- |
 | Brug | Brug (dagoverzicht) | [brug.md](brug.md) |
-| Projectbeheer | Taken, Projecten | [projectbeheer.md](projectbeheer.md) |
+| Projectbeheer | Taken, Projecten, Prospectie, Goedkeuring | [projectbeheer.md](projectbeheer.md), [prospectie.md](prospectie.md), [goedkeuring.md](goedkeuring.md) |
 | Finance | Klanten, Leveranciers, Offertes, Facturen, Inkomend, Boeken, Balans, Inventaris, Analyse, Schaar, Archief | [finance.md](finance.md) |
 | Agents | Hoofd, Loots, Research, Bots, Logboek, Post | [agents.md](agents.md) |
-| Beheer | Zaak, Instellingen (Hoofdstem, Peppol, Grok Bot) | [beheer.md](beheer.md) |
+| GROK BOTS | Grok Bots (meerdere bots, actieve bot, API-sleutels) | [grok-bots.md](grok-bots.md), [bot-api.md](bot-api.md) |
+| Beheer | Setup, Zaak, Instellingen (Naam, Hoofdstem, Peppol, Mail, Thema, Verzendregels, Inrichting), Audit | [setup.md](setup.md), [beheer.md](beheer.md) |
 
 Extra:
 
+- [grok-storing.md](grok-storing.md) — wat werkt er als Grok of de Grok Bots uitliggen (wachtrij, meldingen).
+- [setup.md](setup.md) — alle configuratie en status op één pagina.
+- [mail.md](mail.md) — mailverbinding (Outlook, Gmail, SMTP, mailprogramma) en Azure-app.
+- [hosting-netlify.md](hosting-netlify.md) — KADE op Netlify.
+- [database-neon.md](database-neon.md) — Neon Postgres in Frankfurt.
+- [inrichting-voorbeeld.json](inrichting-voorbeeld.json) — voorbeeld voor Inrichting importeren (fictieve data).
 - [peppol-provider.md](peppol-provider.md) — een Peppol access point kiezen en koppelen, versturen én ontvangen testen.
 
 Algemeen:

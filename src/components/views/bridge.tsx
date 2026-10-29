@@ -1,3 +1,4 @@
+import { ThresholdMeter } from "@/components/views/threshold";
 import { useState } from "react";
 import { daysUntil, fleetSnapshot } from "@/lib/assets";
 import { buildSnapshot } from "@/lib/finance";
@@ -72,6 +73,7 @@ export function Bridge({
           </button>
         )}
       </header>
+      <ThresholdMeter desk={desk} year={Number(day.slice(0, 4))} />
 
       <Panel>
         <div className="flex flex-wrap items-baseline justify-between gap-3">

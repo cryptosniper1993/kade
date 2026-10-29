@@ -21,6 +21,8 @@ Schermen: **Hoofd, Loots, Research, Bots, Logboek, Post.** De AI-antwoorden kome
 
 ## Bots
 
+Het verzendpaneel naar Grok Bot stuurt naar de **actieve bot** uit [GROK BOTS](grok-bots.md).
+
 **Doel:** eigen bots met een vaste rol en opdracht.
 
 1. **Nieuwe bot**: **Naam**, **Rol**, **Kader** → **Bot aanmaken**.
