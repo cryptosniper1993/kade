@@ -1,5 +1,7 @@
 export type LegalForm = "bv" | "eenmanszaak" | "vof" | "commv";
 export type VatRegime = "quarterly" | "monthly" | "exempt";
+/** Sociaal statuut van de zelfstandige: hoofdberoep of bijberoep. */
+export type ActivityStatus = "hoofdberoep" | "bijberoep";
 
 export type Company = {
   name: string;
@@ -11,6 +13,7 @@ export type Company = {
   email: string;
   iban: string;
   vatRegime: VatRegime;
+  activityStatus: ActivityStatus;
   yearEndMonth: number;
 };
 

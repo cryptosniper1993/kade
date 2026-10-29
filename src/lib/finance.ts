@@ -244,7 +244,7 @@ export function buildSnapshot(journals: Journal[], company: Company | null, toda
 export function snapshotBrief(snapshot: Snapshot, company: Company | null, invoices: Invoice[]): string {
   const open = invoices.filter((i) => i.status === "sent");
   const lines = [
-    `Zaak: ${company?.name ?? "nog geen bedrijfsfiche"} (${company?.legalForm ?? "onbekend"}, btw ${company?.vatRegime ?? "onbekend"}).`,
+    `Zaak: ${company?.name ?? "nog geen bedrijfsfiche"} (${company?.legalForm ?? "onbekend"}, btw ${company?.vatRegime ?? "onbekend"}, ${company?.activityStatus ?? "statuut onbekend"}).`,
     `Boekjaar ${snapshot.range.label}.`,
     `Omzet ${snapshot.income.toFixed(2)} EUR, kosten ${snapshot.expense.toFixed(2)} EUR, resultaat ${snapshot.profit.toFixed(2)} EUR.`,
     `Bank ${snapshot.cash.toFixed(2)} EUR. Vorderingen ${snapshot.receivables.toFixed(2)} EUR. Leveranciers ${snapshot.payables.toFixed(2)} EUR.`,

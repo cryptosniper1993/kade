@@ -5,7 +5,7 @@ import { Button, Field, Kicker, Panel, Select, TextInput } from "@/components/ui
 
 const empty: Company = {
   name: "",
-  legalForm: "bv",
+  legalForm: "eenmanszaak",
   vatNumber: "",
   enterpriseNumber: "",
   address: "",
@@ -13,6 +13,7 @@ const empty: Company = {
   email: "",
   iban: "",
   vatRegime: "quarterly",
+  activityStatus: "bijberoep",
   yearEndMonth: 12,
 };
 
@@ -90,9 +91,15 @@ export function CompanyView({ desk, refresh, notice }: { desk: Desk; refresh: ()
         </Field>
         <Field label="Btw-regime">
           <Select value={form.vatRegime} onChange={(e) => set("vatRegime", e.target.value as Company["vatRegime"])}>
-            <option value="quarterly">Kwartaal</option>
-            <option value="monthly">Maand</option>
-            <option value="exempt">Vrijstelling onder 25.000</option>
+            <option value="quarterly">Btw-plichtig, kwartaalaangifte</option>
+            <option value="monthly">Btw-plichtig, maandaangifte</option>
+            <option value="exempt">Vrijstellingsregeling kleine ondernemingen (art. 56bis)</option>
+          </Select>
+        </Field>
+        <Field label="Sociaal statuut">
+          <Select value={form.activityStatus} onChange={(e) => set("activityStatus", e.target.value as Company["activityStatus"])}>
+            <option value="bijberoep">Zelfstandige in bijberoep</option>
+            <option value="hoofdberoep">Zelfstandige in hoofdberoep</option>
           </Select>
         </Field>
         <Field label="Afsluitmaand">

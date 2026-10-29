@@ -136,6 +136,7 @@ export function mapCompany(row: Record<string, unknown> | undefined): Company | 
     email: str(row.email, 160),
     iban: str(row.iban, 40),
     vatRegime: (["quarterly", "monthly", "exempt"].includes(regime) ? regime : "quarterly") as VatRegime,
+    activityStatus: str(row.activity_status, 20) === "hoofdberoep" ? "hoofdberoep" : "bijberoep",
     yearEndMonth: Math.min(12, Math.max(1, Number(row.year_end_month) || 12)),
   };
 }

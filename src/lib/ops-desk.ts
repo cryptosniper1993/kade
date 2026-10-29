@@ -185,6 +185,7 @@ function parseCompany(input: unknown): CompanyInput {
     email: str(row.email, 160),
     iban: str(row.iban, 40),
     vatRegime: (["quarterly", "monthly", "exempt"].includes(regime) ? regime : "quarterly") as VatRegime,
+    activityStatus: str(row.activityStatus, 20) === "hoofdberoep" ? "hoofdberoep" : "bijberoep",
     yearEndMonth: Math.min(12, Math.max(1, Number(row.yearEndMonth) || 12)),
   };
 }
@@ -196,10 +197,10 @@ export const saveCompany = createServerFn({ method: "POST" })
     const sql = await db();
     await sql`
       insert into companies (
-        user_id, name, legal_form, vat_number, enterprise_number, address, city, email, iban, vat_regime, year_end_month
+        user_id, name, legal_form, vat_number, enterprise_number, address, city, email, iban, vat_regime, activity_status, year_end_month
       ) values (
         ${context.userId}, ${data.name}, ${data.legalForm}, ${data.vatNumber}, ${data.enterpriseNumber},
-        ${data.address}, ${data.city}, ${data.email}, ${data.iban}, ${data.vatRegime}, ${data.yearEndMonth}
+        ${data.address}, ${data.city}, ${data.email}, ${data.iban}, ${data.vatRegime}, ${data.activityStatus}, ${data.yearEndMonth}
       )
       on conflict (user_id) do update set
         name = excluded.name,
@@ -211,6 +212,7 @@ export const saveCompany = createServerFn({ method: "POST" })
         email = excluded.email,
         iban = excluded.iban,
         vat_regime = excluded.vat_regime,
+        activity_status = excluded.activity_status,
         year_end_month = excluded.year_end_month`;
     return { ok: true as const };
   });

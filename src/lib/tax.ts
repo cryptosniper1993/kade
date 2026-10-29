@@ -136,7 +136,10 @@ export function duties(company: Company | null, today = new Date()): Duty[] {
     items.push({
       id: "pb",
       title: "Personenbelasting",
-      detail: "Een eenmanszaak dient een aangifte personenbelasting in, geen vennootschapsbelasting. Sociale bijdragen lopen via je sociaal verzekeringsfonds, op basis van je beroepsinkomen.",
+      detail: "Een eenmanszaak dient een aangifte personenbelasting in, geen vennootschapsbelasting. Sociale bijdragen lopen via je sociaal verzekeringsfonds, op basis van je beroepsinkomen." +
+        (company?.activityStatus === "hoofdberoep"
+          ? " In hoofdberoep geldt een minimumbijdrage, ook bij lage inkomsten."
+          : " In bijberoep gelden andere regels: onder een inkomensdrempel betaal je weinig of geen sociale bijdragen. Vraag de actuele drempel na bij je sociaal verzekeringsfonds."),
       date: iso(new Date(y + (today.getMonth() > 5 ? 1 : 0), 5, 30)),
     });
   }
