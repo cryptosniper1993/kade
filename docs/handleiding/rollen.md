@@ -25,7 +25,7 @@ De matrix staat op één plek in de code: `src/lib/auth/permissions.ts` (`PERMIS
 | **3. Peppol en inkomende facturen goedkeuren** (ophalen, status, leverancier koppelen, verwijderen) | ✓ | ✓ | – | – |
 | Boekingen en betalingen (journaal, inkomende factuur boeken/betaald, factuur betaald, afschrijvingen) | ✓ | ✓ | – | – |
 | **4. Bots en agents laten handelen** (bots, Hoofd, Loots, Schaar, Research, mail zoeken, Grok Bot-opdracht) | ✓ | – | – | – |
-| **5. Leden en instellingen beheren** (leden, zaakfiche, interfacenaam, Peppol-test, Grok Bot-instellingen, demo laden/wissen) | ✓ | – | – | – |
+| **5. Leden en instellingen beheren** (leden, zaakfiche, interfacenaam, hoofdstem, Peppol-test, Grok Bot-instellingen, demo laden/wissen) | ✓ | – | – | – |
 
 Wie iets probeert wat zijn rol niet mag, krijgt de melding *Geen toegang: … mag "…" niet.* en er wordt niets bewaard.
 
@@ -45,3 +45,8 @@ Regels:
 ## Migratie
 
 Migratie `0014_rollen.sql` maakt de tabel `zaak_members` en maakt elke bestaande gebruiker **Eigenaar** van zijn eigen zaak. Er verhuist geen enkele rij: de zaak gebruikt dezelfde id als vroeger (`user_id` van de eigenaar), dus alle gegevens blijven waar ze waren. Een account zonder lidmaatschap wordt bij de eerste aanvraag automatisch Eigenaar van zijn eigen zaak, zoals voorheen.
+
+## Beperkingen
+
+- Instellingen zoals interfacenaam en hoofdstem gelden nu voor de hele zaak, niet meer per account.
+- Knoppen die je rol niet mag, zijn nog niet overal verborgen; de server weigert ze wel.

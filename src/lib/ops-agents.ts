@@ -171,7 +171,7 @@ export const saveVoice = createServerFn({ method: "POST" })
     };
   })
   .handler(async ({ context, data }) => {
-    requirePermission(context, "werk");
+    requirePermission(context, "beheer");
     const sql = await db();
     await sql`
       insert into desk_settings (
