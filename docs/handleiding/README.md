@@ -9,6 +9,7 @@ KADE is de zaakterminal voor een Belgische IT-zaak (btw-nummer, ook in bijberoep
 | Finance | Klanten, Leveranciers, Offertes, Facturen, Inkomend, Boeken, Balans, Inventaris, Analyse, Schaar, Archief | [finance.md](finance.md) |
 | Agents | Hoofd, Loots, Research, Bots, Logboek, Post | [agents.md](agents.md) |
 | Beheer | Zaak, Instellingen (Hoofdstem, Peppol, Grok Bot) | [beheer.md](beheer.md) |
+| Rollen | Instellingen → Leden en rollen | [rollen.md](rollen.md) |
 
 Extra:
 
