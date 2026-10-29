@@ -78,7 +78,8 @@ export async function publishTo(a: Account, d: Draft, f: F = fetch, opts: { tikt
   return String(b.data?.publish_id ?? "");
 }
 
-export interface RecentPost { platform: SocialPlatform; text: string; at: string; url: string; stats: string }
+import type { RecentPost } from "./social.ts";
+export type { RecentPost };
 /** Recente posts en basiscijfers, voor zover de API ze geeft. */
 export async function recentPosts(a: Account, f: F = fetch): Promise<RecentPost[]> {
   if (a.platform === "facebook") {

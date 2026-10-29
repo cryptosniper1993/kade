@@ -4,7 +4,7 @@ import { db, mapCompany } from "@/lib/ops-shared";
 import { env } from "@/lib/env.server";
 import { dbSource } from "@/lib/db";
 import { readMailRow } from "@/lib/ops-mail";
-import { socialStatus } from "@/lib/ops-social";
+import { socialStatus } from "@/lib/social-store.server";
 import { readOutreachSettings } from "@/lib/ops-jam";
 import { MAIL_ENV } from "@/lib/mail";
 import { grokHealth, grokState } from "@/lib/grok-client";

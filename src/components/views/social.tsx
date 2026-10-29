@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { deleteSocialPost, disconnectSocial, loadRecentSocial, loadSocial, publishSocialPost, saveSocialPost, startSocialOAuth, type SocialPost, type SocialStatus } from "@/lib/ops-social";
 import { SOCIAL_LABEL, SOCIAL_PLATFORMS, validateDraft, type MediaType, type SocialPlatform } from "@/lib/social";
-import type { RecentPost } from "@/lib/social.server";
+import type { RecentPost } from "@/lib/social";
 import { Area, Button, Field, Panel, Select, TextInput } from "@/components/ui";
 
 /** Social: koppelingen per platform (ook op #setup) en een eenvoudige post-opsteller. */

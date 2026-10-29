@@ -59,3 +59,5 @@ export function pickPrivacy(options: string[], allowPublic: boolean): string {
   return options.includes("SELF_ONLY") ? "SELF_ONLY" : options[0] ?? "SELF_ONLY";
 }
 export function isDue(scheduledAt: string | null, now = Date.now()): boolean { return !scheduledAt || Date.parse(scheduledAt) <= now; }
+
+export interface RecentPost { platform: SocialPlatform; text: string; at: string; url: string; stats: string }
